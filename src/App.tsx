@@ -21,6 +21,29 @@ import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 let wavesurfer: WaveSurfer;
 let region: Region;
 
+interface ArtistT {
+    name: string;
+}
+
+interface GenreT {
+    name: string;
+}
+
+interface AlbumT {
+    name: string;
+}
+
+interface MusicT {
+    title: string;
+    artists: ArtistT[];
+    genres: GenreT[];
+    album: AlbumT;
+    duration_ms: number;
+    release_date: string;
+    score: number;
+    label: string;
+}
+
 const useStyles = createStyles((theme) => ({
     wrapper: {
         position: 'relative',
@@ -150,11 +173,29 @@ function App() {
     const theme = useMantineTheme();
 
 
+    const [items, setItems] = useState([]);
+
     useEffect(() => {
 
         worker.addEventListener('message', (event) => {
 
             console.log(event.data.result);
+
+            const data = new FormData();
+
+            data.append('file', new Blob(event.data.result), 'ly');
+            data.append('channels', 'wavesurfer.numberOfChannels');
+            data.append('sampleRate', 'buffer.sampleRate');
+
+            fetch('http://localhost:80/api/recognize', {
+                method: 'POST',
+                body: data
+            }).then(r => r.json())
+                .then(result => {
+                    if (result.success) {
+                        setItems(result.payload)
+                    }
+                });
 
         })
 
@@ -289,8 +330,6 @@ function App() {
                 resize: Boolean(wavesurfer.getDuration() > 5)
             });
 
-            console.log(region);
-
             /**
              * Запретить скроллинг во время манипуляций с регионом
              */
@@ -305,9 +344,6 @@ function App() {
              * Воспроизвести фрагмент по двойному клику
              */
             region.on('dblclick', () => region.play()/*wavesurfer.play(region.start, region.end)*/);
-
-            wavesurfer.play();
-
 
         });
 
@@ -368,6 +404,17 @@ function App() {
 
                     </div>
                 )}
+
+                {items.length > 0 &&
+
+                    items.map((item: MusicT) => (<div>
+
+                        {item.artists.map((artist) => (<span>{artist.name}</span>))} - {item.title}
+                        <span>{item.label}, {item.release_date}</span>
+
+                    </div>))
+                }
+
 
             </Container>
         </AppShell>
