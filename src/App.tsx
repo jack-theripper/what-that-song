@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import './App.css';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
@@ -6,11 +6,13 @@ import {Button, Container, createStyles, Group, MantineTheme, Text, Title, useMa
 import landing from './assets/1.jpg';
 import {Icon as TablerIcon, Photo, Upload, X} from 'tabler-icons-react';
 import {Dropzone, DropzoneStatus} from '@mantine/dropzone';
+import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 
+// eslint-disable-next-line
+import Worker from 'comlink-loader!./workers/worker.ts';
 
 let wavesurfer: WaveSurfer;
 let region: Region;
-
 
 const useStyles = createStyles((theme) => ({
     wrapper: {
@@ -134,9 +136,24 @@ const _onResize = function (this: Region, delta: number, direction: string) {
     }
 }
 
+const _worker = new Worker();
+
 function App() {
     const {classes} = useStyles();
     const theme = useMantineTheme();
+
+
+    useEffect(() => {
+        // _worker.addEventListener('message', (event) => {
+        //
+        //     console.log(event);
+        // });
+
+    }, [])
+
+
+
+
 
     const onDropHandler = (files: File[]) => {
         for (let i = 0, file = files[i]; i < files.length; i++) {
@@ -169,12 +186,40 @@ function App() {
      */
     const [currentTime, setCurrentTime] = useState(0);
 
-    const togglePlay = () => {
-        console.log('togglePlay', wavesurfer)
-        wavesurfer.playPause();
-    };
+    const [encoding, setEncoding] = useState(false);
+
+    /**
+     * Воспроизведение/пауза
+     */
+    const togglePlay = () => wavesurfer.playPause();
 
     const waveRef = useRef(null);
+
+    const processing = () => {
+        setEncoding(true);
+
+        let audioBuffer = (wavesurfer.backend as WaveSurferBackend & {buffer: AudioBuffer}).buffer;
+        let sampleRate = audioBuffer.sampleRate;
+
+        let start = region.start * sampleRate;
+        let end = region.end * sampleRate;
+
+        let buffers = [], vector, buffer;
+
+        for (let channel = 0, channels = Math.min(2, audioBuffer.numberOfChannels); channel < channels; channel++) {
+            buffer = audioBuffer.getChannelData(channel).slice(start, end);
+            buffers[channel] = new Int16Array(buffer.length);
+
+            for (let i = 0, length = buffer.length; i < length; ++i) {
+                vector = buffer[i] * 0x7fff;
+                buffers[channel][i] = vector < 0 ? Math.max(vector, -0x8000) : Math.min(vector, 0x7fff);
+            }
+        }
+
+        _worker.postMessage('test');
+
+        console.log(buffers);
+    };
 
     /**
      * Инициализация WaveSurfer
@@ -297,6 +342,7 @@ function App() {
                 <div>
 
                     <Button onClick={togglePlay}>{playing ? 'Пауза' : 'Играть'}</Button>
+                    <Button onClick={processing}>{encoding ? 'Обрабатывается' : 'Начать обработку'}</Button>
 
 
                 </div>
