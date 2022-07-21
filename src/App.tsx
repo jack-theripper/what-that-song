@@ -2,14 +2,21 @@ import React, {useEffect, useMemo, useRef, useState} from 'react';
 import './App.css';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
-import {Button, Container, createStyles, Group, MantineTheme, Text, Title, useMantineTheme} from "@mantine/core";
+import {
+    AppShell,
+    Button,
+    Container,
+    createStyles,
+    Group,
+    MantineTheme,
+    Text,
+    Title,
+    useMantineTheme
+} from "@mantine/core";
 import landing from './assets/1.jpg';
 import {Icon as TablerIcon, Photo, Upload, X} from 'tabler-icons-react';
 import {Dropzone, DropzoneStatus} from '@mantine/dropzone';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
-
-// eslint-disable-next-line
-import Worker from 'comlink-loader!./workers/worker.ts';
 
 let wavesurfer: WaveSurfer;
 let region: Region;
@@ -31,8 +38,8 @@ const useStyles = createStyles((theme) => ({
         zIndex: 1,
         padding: '10em 5em',
         borderRadius: '5em',
-        background: 'url(' + landing + ') no-repeat',
-        backgroundPosition: 'center'
+        background: 'rgba(255,255,255, 0.7)',
+        // backgroundPosition: 'center'
     },
 
     dots: {
@@ -136,7 +143,7 @@ const _onResize = function (this: Region, delta: number, direction: string) {
     }
 }
 
-const _worker = new Worker();
+const worker = new Worker(new URL('./workers/mp3encoder.js', import.meta.url));
 
 function App() {
     const {classes} = useStyles();
@@ -144,15 +151,14 @@ function App() {
 
 
     useEffect(() => {
-        // _worker.addEventListener('message', (event) => {
-        //
-        //     console.log(event);
-        // });
 
-    }, [])
+        worker.addEventListener('message', (event) => {
 
+            console.log(event.data.result);
 
+        })
 
+    }, [worker])
 
 
     const onDropHandler = (files: File[]) => {
@@ -198,7 +204,7 @@ function App() {
     const processing = () => {
         setEncoding(true);
 
-        let audioBuffer = (wavesurfer.backend as WaveSurferBackend & {buffer: AudioBuffer}).buffer;
+        let audioBuffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
         let sampleRate = audioBuffer.sampleRate;
 
         let start = region.start * sampleRate;
@@ -216,9 +222,11 @@ function App() {
             }
         }
 
-        _worker.postMessage('test');
-
-        console.log(buffers);
+        worker.postMessage({
+            action: 'process',
+            buffers,
+            sampleRate: audioBuffer.sampleRate
+        })
     };
 
     /**
@@ -307,48 +315,62 @@ function App() {
     }, [waveRef]);
 
     return (
-        <Container className={classes.wrapper} size={1400}>
 
-            <div className={classes.inner}>
-                <Title className={classes.title}>
-                    Узнать название песни {' '}
-                    <Text component="span" color={theme.primaryColor} inherit>
-                        по отрывку
-                    </Text>
-                </Title>
+        <AppShell
+            padding="md"
+            styles={(theme) => ({
+                main: {
+                    background: `url(${landing}) no-repeat`,
+                    backgroundSize: 'cover',
+                    backgroundAttachment: 'fixed'
+                },
+            })}
+        >
 
-                <Container p={0} size={600}>
-                    <Text size="lg" color="dimmed" className={classes.description}>
-                        Сколько раз вы сталкивались с ситуацией, когда по радио или в видео на YouTube слышали классную
-                        песню,
-                        но не знали кто ее поет, и никто в комментариях не смог сказать ее название?
-                    </Text>
-                </Container>
-            </div>
+            <Container className={classes.wrapper} size={1400}>
 
-            <Dropzone
-                onDrop={onDropHandler}
-                onReject={(files) => console.log('rejected files', files)}
-                accept={['audio/*', 'video/*']}
-            >
-                {(status) => dropzoneChildren(status, theme)}
-            </Dropzone>
+                <div className={classes.inner}>
+                    <Title className={classes.title}>
+                        Узнать название песни {' '}
+                        <Text component="span" color={theme.primaryColor} inherit>
+                            по отрывку
+                        </Text>
+                    </Title>
 
-            <p>{currentTime} / {duration}</p>
-
-            <div className={` ${!hasReadyBuffer ? 'hidden-wave' : ''} `} ref={waveRef}></div>
-
-            {hasReadyBuffer && (
-                <div>
-
-                    <Button onClick={togglePlay}>{playing ? 'Пауза' : 'Играть'}</Button>
-                    <Button onClick={processing}>{encoding ? 'Обрабатывается' : 'Начать обработку'}</Button>
-
-
+                    <Container p={0} size={600}>
+                        <Text size="lg" color="dimmed" className={classes.description}>
+                            Сколько раз вы сталкивались с ситуацией, когда по радио или в видео на YouTube слышали
+                            классную
+                            песню,
+                            но не знали кто ее поет, и никто в комментариях не смог сказать ее название?
+                        </Text>
+                    </Container>
                 </div>
-            )}
 
-        </Container>
+                <Dropzone
+                    onDrop={onDropHandler}
+                    onReject={(files) => console.log('rejected files', files)}
+                    accept={['audio/*', 'video/*']}
+                >
+                    {(status) => dropzoneChildren(status, theme)}
+                </Dropzone>
+
+                <p>{currentTime} / {duration}</p>
+
+                <div className={` ${!hasReadyBuffer ? 'hidden-wave' : ''} `} ref={waveRef}></div>
+
+                {hasReadyBuffer && (
+                    <div>
+
+                        <Button onClick={togglePlay}>{playing ? 'Пауза' : 'Играть'}</Button>
+                        <Button onClick={processing}>{encoding ? 'Обрабатывается' : 'Начать обработку'}</Button>
+
+
+                    </div>
+                )}
+
+            </Container>
+        </AppShell>
     );
 }
 
