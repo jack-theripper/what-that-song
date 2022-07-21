@@ -1,7 +1,7 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import './App.css';
 import WaveSurfer from "wavesurfer.js";
-import Region from 'wavesurfer.js/src/plugin/regions';
+import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
 import {Button, Container, createStyles, Group, MantineTheme, Text, Title, useMantineTheme} from "@mantine/core";
 import landing from './assets/1.jpg';
 import {Icon as TablerIcon, Photo, Upload, X} from 'tabler-icons-react';
@@ -82,6 +82,7 @@ function getIconColor(status: DropzoneStatus, theme: MantineTheme) {
                 ? theme.colors.dark[0]
                 : theme.colors.gray[7];
 }
+
 function ImageUploadIcon({
                              status,
                              ...props
@@ -98,8 +99,8 @@ function ImageUploadIcon({
 }
 
 export const dropzoneChildren = (status: DropzoneStatus, theme: MantineTheme) => (
-    <Group position="center" spacing="xl" style={{ minHeight: 220, pointerEvents: 'none' }}>
-        <ImageUploadIcon status={status} style={{ color: getIconColor(status, theme) }} size={80} />
+    <Group position="center" spacing="xl" style={{minHeight: 220, pointerEvents: 'none'}}>
+        <ImageUploadIcon status={status} style={{color: getIconColor(status, theme)}} size={80}/>
 
         <div>
             <Text size="xl" inline>
@@ -113,11 +114,11 @@ export const dropzoneChildren = (status: DropzoneStatus, theme: MantineTheme) =>
 );
 
 function App() {
-    const { classes } = useStyles();
+    const {classes} = useStyles();
     const theme = useMantineTheme();
 
     const onDropHandler = (files: File[]) => {
-        for (let i = 0, file = files[i]; i < files.length;  i++) {
+        for (let i = 0, file = files[i]; i < files.length; i++) {
             console.log(file);
 
             wavesurfer.empty();
@@ -127,10 +128,30 @@ function App() {
         }
     }
 
+    /**
+     * Загружено ли что-то в буфер и может ли пользователь с ним взаимодействовать
+     */
     const [hasReadyBuffer, setReadyBuffer] = useState(false);
+
+    /**
+     * Флаг, который сохраняет текущее состояние - воспроизведение/пауза
+     */
     const [playing, setPlaying] = useState(false);
 
-    const togglePlay = () => wavesurfer.playPause(); // Воспроизведение/пауза
+    /**
+     * Продолжительность загруженного буфера
+     */
+    const [duration, setDuration] = useState(0.0);
+
+    /**
+     * Текущая позиция воспроизведения в секундах
+     */
+    const [currentTime, setCurrentTime] = useState(0);
+
+    const togglePlay = () => {
+        console.log('togglePlay', wavesurfer)
+        wavesurfer.playPause();
+    };
 
     const waveRef = useRef(null);
 
@@ -150,23 +171,69 @@ function App() {
             waveColor: '#ABB0BC',
             progressColor: '#8668A3',
             plugins: [
-                Region.create({
+                RegionsPlugin.create({
                     dragSelection: false
                 })
             ]
         });
 
         /**
+         * Актуализируем состояние свойства 'playing'
+         */
+        wavesurfer.on('play', () => setPlaying(true));
+        wavesurfer.on('pause', () => setPlaying(false));
+
+        /**
+         * Обновляем позицию воспроизведения при перемотке и воспроизведении
+         */
+        wavesurfer.on('seek', () => setCurrentTime(wavesurfer.getCurrentTime()));
+        wavesurfer.on('audioprocess', () => setCurrentTime(wavesurfer.getCurrentTime()));
+
+        /**
+         * Если загружен новый буфер, необходимо удалить предыдущий регион
+         */
+        wavesurfer.on('loading', () => wavesurfer.clearRegions());
+
+        /**
          * В буфер что-то загружено, с этим нужно поработать
          */
         wavesurfer.on('ready', () => {
             setReadyBuffer(true);
+            setDuration(wavesurfer.getDuration());
+
+            // Пересоздать регион
+            region = wavesurfer.addRegion({
+                start: 0,
+                end: 15,
+                color: 'rgba(114,161,219, 0.2)',
+                drag: true,
+                resize: Boolean(wavesurfer.getDuration() > 5)
+            });
+
+            console.log(region);
+
+            /**
+             * Запретить скроллинг во время манипуляций с регионом
+             */
+            region.on('update', () => wavesurfer.params.scrollParent = false);
+            region.on('update-end', () => wavesurfer.params.scrollParent = true);
+
+            // Обновить позицию региона
+            // region.on('update-end', () => this.region = {start: region.start, end: region.end});
+            // this.region = {start: region.start, end: region.end};
+
+            /**
+             * Воспроизвести фрагмент по двойному клику
+             */
+            region.on('dblclick', () => region.play()/*wavesurfer.play(region.start, region.end)*/);
+
+            wavesurfer.play();
 
 
         });
 
 
-    });
+    }, [waveRef]);
 
     return (
         <Container className={classes.wrapper} size={1400}>
@@ -175,13 +242,14 @@ function App() {
                 <Title className={classes.title}>
                     Узнать название песни {' '}
                     <Text component="span" color={theme.primaryColor} inherit>
-                          по отрывку
+                        по отрывку
                     </Text>
                 </Title>
 
                 <Container p={0} size={600}>
                     <Text size="lg" color="dimmed" className={classes.description}>
-                        Сколько раз вы сталкивались с ситуацией, когда по радио или в видео на YouTube слышали классную песню,
+                        Сколько раз вы сталкивались с ситуацией, когда по радио или в видео на YouTube слышали классную
+                        песню,
                         но не знали кто ее поет, и никто в комментариях не смог сказать ее название?
                     </Text>
                 </Container>
@@ -195,11 +263,12 @@ function App() {
                 {(status) => dropzoneChildren(status, theme)}
             </Dropzone>
 
-            <div ref={waveRef}></div>
+            <p>{currentTime} / {duration}</p>
+
+            <div className={` ${!hasReadyBuffer ? 'hidden-wave' : ''} `} ref={waveRef}></div>
 
             {hasReadyBuffer && (
                 <div>
-
 
                     <Button onClick={togglePlay}>{playing ? 'Пауза' : 'Играть'}</Button>
 
