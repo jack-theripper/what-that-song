@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import './App.css';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
-import {AppShell, Button, Container, Group, MantineTheme, Text, Title, useMantineTheme} from "@mantine/core";
+import {AppShell, Button, Container, Group, MantineTheme, Paper, Text, Title, useMantineTheme} from "@mantine/core";
 import landing from './assets/1.jpg';
 import {Icon as TablerIcon, Music, Upload, X} from 'tabler-icons-react';
 import {Dropzone, DropzoneStatus} from '@mantine/dropzone';
@@ -35,7 +35,6 @@ interface MusicT {
     score: number;
     label: string;
 }
-
 
 
 function getIconColor(status: DropzoneStatus, theme: MantineTheme) {
@@ -233,7 +232,9 @@ function App() {
             setReadyBuffer(true);
             setDuration(wavesurfer.getDuration());
 
-            // Пересоздать регион
+            /**
+             * Пересоздать регион
+             */
             region = wavesurfer.addRegion({
                 start: 0,
                 end: 15,
@@ -248,10 +249,6 @@ function App() {
             region.on('update', () => wavesurfer.params.scrollParent = false);
             region.on('update-end', () => wavesurfer.params.scrollParent = true);
 
-            // Обновить позицию региона
-            // region.on('update-end', () => this.region = {start: region.start, end: region.end});
-            // this.region = {start: region.start, end: region.end};
-
             /**
              * Воспроизвести фрагмент по двойному клику
              */
@@ -259,28 +256,24 @@ function App() {
 
         });
 
-
     }, [waveRef]);
 
     return (
 
-        <AppShell
-            padding="md" fixed={true}
-
-            styles={(theme) => ({
-
-                root: {
-                    background: `url(${landing}) no-repeat`,
-                    backgroundSize: 'cover',
-                    backgroundAttachment: 'fixed'
-                },
-            })}
+        <AppShell padding="md" fixed={true} styles={(theme) => ({
+            root: {
+                background: `url(${landing}) no-repeat`,
+                backgroundSize: 'cover',
+                backgroundAttachment: 'fixed'
+            },
+        })}
         >
 
             <Container className={classes.wrapper} size={1400}>
                 <div className={classes.inner}>
                     <Title className={classes.title}>
-                        Узнать название песни {' '}<Text component="span" color={theme.primaryColor} inherit>по отрывку</Text>
+                        Узнать название песни {' '}<Text component="span" color={theme.primaryColor} inherit>по
+                        отрывку</Text>
                     </Title>
                     <Container p={0} size={600}>
                         <Text size="lg" color="dimmed" className={classes.description}>
@@ -289,37 +282,25 @@ function App() {
                         </Text>
                     </Container>
 
-
                     <Dropzone onDrop={onDropHandler} mt={'1em'}
                               accept={['audio/*', 'video/*']}
                               onReject={(files) => console.log('rejected files', files)}
                     >
-
-                        {(status) => (
-                            dropzoneChildren(status, theme)
-                        )}
-
-
-
-
-
-
-                </Dropzone>
+                        {(status) => (dropzoneChildren(status, theme))}
+                    </Dropzone>
                 </div>
 
-                <p>{currentTime} / {duration}</p>
+                <Paper p={'1em'} mt={'2em'} style={{display: (!hasReadyBuffer ? 'none' : 'block')}}>
+                    <p>Играет: {currentTime}, продолжительность {duration}</p>
+                    <div ref={waveRef}></div>
+                    <Group mt={'1em'}>
+                        <Button onClick={togglePlay} variant={'light'}>{playing ? 'Пауза' : 'Играть'}</Button>
+                        <Button onClick={processing} variant={'outline'}>{encoding ? 'Обрабатывается' : 'Узнать навание?'}</Button>
+                    </Group>
+                </Paper>
 
-                <div className={` ${!hasReadyBuffer ? 'hidden-wave' : ''} `} ref={waveRef}></div>
-
-                {hasReadyBuffer && (
-                    <div>
-
-                        <Button onClick={togglePlay}>{playing ? 'Пауза' : 'Играть'}</Button>
-                        <Button onClick={processing}>{encoding ? 'Обрабатывается' : 'Начать обработку'}</Button>
 
 
-                    </div>
-                )}
 
                 {items.length > 0 &&
 
