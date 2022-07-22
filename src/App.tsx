@@ -1,8 +1,19 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import './App.css';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
-import {AppShell, Button, Container, Group, MantineTheme, Paper, Text, Title, useMantineTheme} from "@mantine/core";
+import {
+    AppShell,
+    Button,
+    Container,
+    Group,
+    MantineTheme,
+    Paper,
+    Progress,
+    Text,
+    Title,
+    useMantineTheme
+} from "@mantine/core";
 import landing from './assets/1.jpg';
 import {Icon as TablerIcon, Music, Upload, X} from 'tabler-icons-react';
 import {Dropzone, DropzoneStatus} from '@mantine/dropzone';
@@ -117,6 +128,7 @@ function App() {
         for (let i = 0, file = files[i]; i < files.length; i++) {
             console.log(file);
 
+            setOperation('demuxing');
             wavesurfer.empty();
             wavesurfer.loadBlob(file);
 
@@ -146,6 +158,10 @@ function App() {
 
     const [encoding, setEncoding] = useState(false);
 
+
+    const [progress, setProgress] = useState(0);
+    const [operation, setOperation] = useState<string | null>(null);
+
     /**
      * Воспроизведение/пауза
      */
@@ -153,9 +169,13 @@ function App() {
 
     const waveRef = useRef(null);
 
-    const processing = () => {
+    /**
+     * Вырезать отрезок файла и передать его в воркер для перекодирования pcm в mpeg
+     */
+    const processing = useCallback(() => {
         setEncoding(true);
 
+        // Косяк при типизации. На самом деле там есть AudioBuffer
         let audioBuffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
         let sampleRate = audioBuffer.sampleRate;
 
@@ -174,12 +194,9 @@ function App() {
             }
         }
 
-        worker.postMessage({
-            action: 'process',
-            buffers,
-            sampleRate: audioBuffer.sampleRate
-        })
-    };
+        worker.postMessage({action: 'process', buffers, sampleRate: audioBuffer.sampleRate});
+
+    }, [wavesurfer, worker]);
 
     /**
      * Инициализация WaveSurfer
@@ -226,9 +243,16 @@ function App() {
         wavesurfer.Region.prototype.onResize = resizeHandler;
 
         /**
+         * Прогресс обработки
+         */
+        wavesurfer.on('loading', complete => setProgress(complete));
+
+        /**
          * В буфер что-то загружено, с этим нужно поработать
          */
         wavesurfer.on('ready', () => {
+            setProgress(100);
+            setOperation(null);
             setReadyBuffer(true);
             setDuration(wavesurfer.getDuration());
 
@@ -290,17 +314,17 @@ function App() {
                     </Dropzone>
                 </div>
 
+                {(operation == 'demuxing' && progress < 100) && <Progress value={progress}/>}
+
                 <Paper p={'1em'} mt={'2em'} style={{display: (!hasReadyBuffer ? 'none' : 'block')}}>
                     <p>Играет: {currentTime}, продолжительность {duration}</p>
                     <div ref={waveRef}></div>
                     <Group mt={'1em'}>
                         <Button onClick={togglePlay} variant={'light'}>{playing ? 'Пауза' : 'Играть'}</Button>
-                        <Button onClick={processing} variant={'outline'}>{encoding ? 'Обрабатывается' : 'Узнать навание?'}</Button>
+                        <Button onClick={processing}
+                                variant={'outline'}>{encoding ? 'Обрабатывается' : 'Узнать навание?'}</Button>
                     </Group>
                 </Paper>
-
-
-
 
                 {items.length > 0 &&
 
