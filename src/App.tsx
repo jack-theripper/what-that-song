@@ -101,7 +101,14 @@ function App() {
 
         worker.addEventListener('message', (event) => {
 
-            console.log(event.data.result);
+            if (event.data.action !== 'processed') {
+                setProgress(event.data.value.toFixed(2));
+
+                return ;
+            }
+
+            setProgress(100);
+            setOperation(null);
 
             const data = new FormData();
 
@@ -156,9 +163,9 @@ function App() {
      */
     const [currentTime, setCurrentTime] = useState(0);
 
-    const [encoding, setEncoding] = useState(false);
-
-
+    /**
+     * Для отслеживания прогресса преобразований
+     */
     const [progress, setProgress] = useState(0);
     const [operation, setOperation] = useState<string | null>(null);
 
@@ -173,7 +180,7 @@ function App() {
      * Вырезать отрезок файла и передать его в воркер для перекодирования pcm в mpeg
      */
     const processing = useCallback(() => {
-        setEncoding(true);
+        setOperation('encoding');
 
         // Косяк при типизации. На самом деле там есть AudioBuffer
         let audioBuffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
@@ -314,15 +321,15 @@ function App() {
                     </Dropzone>
                 </div>
 
-                {(operation == 'demuxing' && progress < 100) && <Progress value={progress}/>}
+                {(operation != null && progress < 100) && <Progress value={progress}/>}
 
                 <Paper p={'1em'} mt={'2em'} style={{display: (!hasReadyBuffer ? 'none' : 'block')}}>
                     <p>Играет: {currentTime}, продолжительность {duration}</p>
                     <div ref={waveRef}></div>
                     <Group mt={'1em'}>
                         <Button onClick={togglePlay} variant={'light'}>{playing ? 'Пауза' : 'Играть'}</Button>
-                        <Button onClick={processing}
-                                variant={'outline'}>{encoding ? 'Обрабатывается' : 'Узнать навание?'}</Button>
+                        <Button onClick={processing} loading={operation == 'encoding' || operation == 'sending'}
+                                variant={'outline'}>{operation === 'encoding' ? 'Обрабатывается' : 'Узнать навание?'}</Button>
                     </Group>
                 </Paper>
 

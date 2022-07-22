@@ -28,7 +28,9 @@ self.onmessage = (event) => {
             chunks.push(buffer);
         }
 
-
+        if (i % 10 === 0) {
+            self.postMessage({action: 'progress', value: 100 / (length / i)});
+        }
     }
 
     buffer = encoder.flush();
