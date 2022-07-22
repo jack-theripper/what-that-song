@@ -47,6 +47,10 @@ interface MusicT {
     label: string;
 }
 
+interface PromiseRecognizeT {
+    success: boolean;
+    payload: MusicT[];
+}
 
 function getIconColor(status: DropzoneStatus, theme: MantineTheme) {
     return status.accepted
@@ -95,11 +99,14 @@ function App() {
     const theme = useMantineTheme();
 
 
-    const [items, setItems] = useState([]);
+    const [items, setItems] = useState<Array<MusicT>>([]);
 
+    /**
+     * Обработчик для чтения сообщений воркера
+     */
     useEffect(() => {
 
-        worker.addEventListener('message', (event) => {
+        worker.addEventListener('message', async (event) => {
 
             if (event.data.action !== 'processed') {
                 setProgress(event.data.value.toFixed(2));
@@ -116,20 +123,23 @@ function App() {
             data.append('channels', 'wavesurfer.numberOfChannels');
             data.append('sampleRate', 'buffer.sampleRate');
 
-            fetch('http://localhost:80/api/recognize', {
-                method: 'POST',
-                body: data
-            }).then(r => r.json())
-                .then(result => {
-                    if (result.success) {
-                        setItems(result.payload)
-                    }
-                });
+            setOperation('sending');
 
+            try {
+                const response = await fetch('http://localhost:80/api/recognize', {method: 'POST', body: data});
+                const result: PromiseRecognizeT = await response.json();
+
+                if (result.success) {
+                    setItems(result.payload);
+                }
+            } catch (e) {
+                alert(e);
+            } finally {
+                setOperation(null);
+            }
         })
 
     }, [worker])
-
 
     const onDropHandler = (files: File[]) => {
         for (let i = 0, file = files[i]; i < files.length; i++) {
