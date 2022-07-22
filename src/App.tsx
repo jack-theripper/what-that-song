@@ -118,10 +118,11 @@ function App() {
             setOperation(null);
 
             const data = new FormData();
+            const buffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
 
             data.append('file', new Blob(event.data.result), 'ly');
-            data.append('channels', 'wavesurfer.numberOfChannels');
-            data.append('sampleRate', 'buffer.sampleRate');
+            data.append('channels', `${buffer.numberOfChannels}`); // typescript добавляет говнокода
+            data.append('sampleRate', `${buffer.sampleRate}`);
 
             setOperation('sending');
 
