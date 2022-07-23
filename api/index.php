@@ -86,9 +86,9 @@ $app->post('/api/recognize', function () {
 	fseek($handle, 0); // т.е. я читал первые байты в checkBytes, то нужно сбросить указатель
 
 	// self
-	$requrl = "";
-	$access_key = '';
-	$access_secret = '';
+	$requrl = "http://identify-eu-west-1.acrcloud.com/v1/identify";
+	$access_key = getenv('_ACCESS_KEY');
+	$access_secret = getenv('_ACCESS_SECRET');
 
 //	$process = new Process("\"{$ffmpegPath}\" -y -stdin -f mp3 -i - -ss 0 -t 15 -f mp3 -ar 44100 -");
 	$process = new Process([$ffmpegPath, '-y', '-stdin', '-f', 'mp3', '-i', '-', '-ss', 0, '-t', 15, '-f', 'mp3', '-ar', 44100, '-']);
