@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import './App.css';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
 import {
@@ -127,7 +126,7 @@ function App() {
             setOperation('sending');
 
             try {
-                const response = await fetch('http://localhost:80/api/recognize', {method: 'POST', body: data});
+                const response = await fetch('/api/recognize', {method: 'POST', body: data});
                 const result: PromiseRecognizeT = await response.json();
 
                 if (result.success) {

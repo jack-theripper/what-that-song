@@ -45,14 +45,14 @@ function checkBytes($rawBytes)
 	return true;
 }
 
-$app->get('/', function () {
+$app->get('/api', function () {
 	return ['success' => true];
 });
 
 /**
  * Обработчик определения композиции по отрезку.
  */
-$app->post('/php-app/recognize', function () {
+$app->post('/api/recognize', function () {
 	/** @var Micro $this */
 
 	if (!$this->request->hasFiles()) {
@@ -195,6 +195,9 @@ $app->post('/php-app/recognize', function () {
 	return $response;
 });
 
+$app->notFound(function () {
+	return ['success' => false, 'message' => 'not found'];
+});
 
 // Making the correct answer after executing
 $app->after(function () use ($app) {
