@@ -52,7 +52,7 @@ $app->get('/', function () {
 /**
  * Обработчик определения композиции по отрезку.
  */
-$app->post('/api/recognize', function () {
+$app->post('/php-app/recognize', function () {
 	/** @var Micro $this */
 
 	if (!$this->request->hasFiles()) {
