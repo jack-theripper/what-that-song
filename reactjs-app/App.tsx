@@ -15,10 +15,10 @@ import {
 } from "@mantine/core";
 import landing from './assets/1.jpg';
 import {Icon as TablerIcon, Music, Upload, X} from 'tabler-icons-react';
-import {Dropzone, DropzoneStatus} from '@mantine/dropzone';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 import {useMainStyles} from "./styles/main-styles";
 import {resizeHandler} from "./utils/resize-handler";
+import {Dropzone} from "@mantine/dropzone";
 
 let wavesurfer: WaveSurfer;
 let region: Region;
@@ -50,46 +50,6 @@ interface PromiseRecognizeT {
     success: boolean;
     payload: MusicT[];
 }
-
-function getIconColor(status: DropzoneStatus, theme: MantineTheme) {
-    return status.accepted
-        ? theme.colors[theme.primaryColor][theme.colorScheme === 'dark' ? 4 : 6]
-        : status.rejected
-            ? theme.colors.red[theme.colorScheme === 'dark' ? 4 : 6]
-            : theme.colorScheme === 'dark'
-                ? theme.colors.dark[0]
-                : theme.colors.gray[7];
-}
-
-function ImageUploadIcon({
-                             status,
-                             ...props
-                         }: React.ComponentProps<TablerIcon> & { status: DropzoneStatus }) {
-    if (status.accepted) {
-        return <Upload {...props} />;
-    }
-
-    if (status.rejected) {
-        return <X {...props} />;
-    }
-
-    return <Music {...props} />;
-}
-
-export const dropzoneChildren = (status: DropzoneStatus, theme: MantineTheme) => (
-    <Group position="center" spacing="xl" style={{pointerEvents: 'none'}}>
-        <ImageUploadIcon status={status} style={{color: getIconColor(status, theme)}} size={80}/>
-
-        <div>
-            <Text size="xl" inline>
-                Выберите аудио или видео отрезок,
-            </Text>
-            <Text size="sm" color="dimmed" inline mt={7}>
-                отметьте фрагмент и найдите название композиции!
-            </Text>
-        </div>
-    </Group>
-);
 
 const worker = new Worker(new URL('./workers/mp3encoder.js', import.meta.url));
 
@@ -323,11 +283,39 @@ function App() {
                         </Text>
                     </Container>
 
-                    <Dropzone onDrop={onDropHandler} mt={'1em'}
-                              accept={['audio/*', 'video/*']}
-                              onReject={(files) => console.log('rejected files', files)}
+                    <Dropzone
+                        onDrop={onDropHandler} mt={'1em'}
+                        onReject={(files) => console.log('rejected files', files)}
+                        accept={['audio/*', 'video/*']}
                     >
-                        {(status) => (dropzoneChildren(status, theme))}
+
+                        <Group position="center" spacing="xl" style={{pointerEvents: 'none'}}>
+
+                            <Dropzone.Accept>
+                                <Upload
+                                    size={50}
+                                    color={theme.colors[theme.primaryColor][theme.colorScheme === 'dark' ? 4 : 6]}
+                                />
+                            </Dropzone.Accept>
+                            <Dropzone.Reject>
+                                <X
+                                    size={50}
+                                    color={theme.colors.red[theme.colorScheme === 'dark' ? 4 : 6]}
+                                />
+                            </Dropzone.Reject>
+                            <Dropzone.Idle>
+                                <Music size={50}  />
+                            </Dropzone.Idle>
+
+                            <div>
+                                <Text size="xl" inline>
+                                    Выберите аудио или видео отрезок,
+                                </Text>
+                                <Text size="sm" color="dimmed" inline mt={7}>
+                                    отметьте фрагмент и найдите название композиции!
+                                </Text>
+                            </div>
+                        </Group>
                     </Dropzone>
                 </div>
 
