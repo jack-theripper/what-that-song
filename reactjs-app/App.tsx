@@ -1,20 +1,9 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
-import {
-    AppShell,
-    Button,
-    Container,
-    Group,
-    MantineTheme,
-    Paper,
-    Progress,
-    Text,
-    Title,
-    useMantineTheme
-} from "@mantine/core";
+import {AppShell, Button, Container, Group, Paper, Progress, Text, Title, useMantineTheme} from "@mantine/core";
 import landing from './assets/1.jpg';
-import {Icon as TablerIcon, Music, Upload, X} from 'tabler-icons-react';
+import {Music, Upload, X} from 'tabler-icons-react';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 import {useMainStyles} from "./styles/main-styles";
 import {resizeHandler} from "./utils/resize-handler";
@@ -259,6 +248,8 @@ function App() {
 
     }, [waveRef]);
 
+    const openRef = useRef<() => void>(null);
+
     return (
 
         <AppShell padding="md" fixed={true} styles={(theme) => ({
@@ -283,41 +274,14 @@ function App() {
                         </Text>
                     </Container>
 
-                    <Dropzone
-                        onDrop={onDropHandler} mt={'1em'}
-                        onReject={(files) => console.log('rejected files', files)}
-                        accept={['audio/*', 'video/*']}
-                    >
 
-                        <Group position="center" spacing="xl" style={{pointerEvents: 'none'}}>
-
-                            <Dropzone.Accept>
-                                <Upload
-                                    size={50}
-                                    color={theme.colors[theme.primaryColor][theme.colorScheme === 'dark' ? 4 : 6]}
-                                />
-                            </Dropzone.Accept>
-                            <Dropzone.Reject>
-                                <X
-                                    size={50}
-                                    color={theme.colors.red[theme.colorScheme === 'dark' ? 4 : 6]}
-                                />
-                            </Dropzone.Reject>
-                            <Dropzone.Idle>
-                                <Music size={50}  />
-                            </Dropzone.Idle>
-
-                            <div>
-                                <Text size="xl" inline>
-                                    Выберите аудио или видео отрезок,
-                                </Text>
-                                <Text size="sm" color="dimmed" inline mt={7}>
-                                    отметьте фрагмент и найдите название композиции!
-                                </Text>
-                            </div>
-                        </Group>
-                    </Dropzone>
                 </div>
+
+
+                <Paper withBorder radius={'xl'}>
+                    <Button onClick={() => openRef.current && openRef.current()}>Выбрать файл</Button>
+                </Paper>
+
 
                 {(operation != null && progress < 100) && <Progress value={progress}/>}
 
@@ -331,16 +295,39 @@ function App() {
                     </Group>
                 </Paper>
 
-                {items.length > 0 &&
+                <Dropzone.FullScreen openRef={openRef}
+                    active={true}
+                    accept={['audio/*', 'video/*']}
+                    onDrop={onDropHandler}
+                                     onReject={(files) => console.log('rejected files', files)}
+                >
+                    <Group position="center" spacing="xl" style={{ minHeight: 220, pointerEvents: 'none' }}>
+                        <Dropzone.Accept>
+                            <Upload
+                                size={50}
+                                color={theme.colors[theme.primaryColor][theme.colorScheme === 'dark' ? 4 : 6]}
+                            />
+                        </Dropzone.Accept>
+                        <Dropzone.Reject>
+                            <X
+                                size={50}
+                                color={theme.colors.red[theme.colorScheme === 'dark' ? 4 : 6]}
+                            />
+                        </Dropzone.Reject>
+                        <Dropzone.Idle>
+                            <Music size={50}  />
+                        </Dropzone.Idle>
 
-                    items.map((item: MusicT) => (<div>
-
-                        {item.artists.map((artist) => (<span>{artist.name}</span>))} - {item.title}
-                        <span>{item.label}, {item.release_date}</span>
-
-                    </div>))
-                }
-
+                        <div>
+                            <Text size="xl" inline>
+                                Выберите аудио или видео отрезок,
+                            </Text>
+                            <Text size="sm" color="dimmed" inline mt={7}>
+                                отметьте фрагмент и найдите название композиции!
+                            </Text>
+                        </div>
+                    </Group>
+                </Dropzone.FullScreen>
 
             </Container>
 
