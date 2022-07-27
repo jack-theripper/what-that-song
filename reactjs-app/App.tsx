@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
 import {AppShell, Button, Container, Group, Paper, Progress, Text, Title, useMantineTheme} from "@mantine/core";
-import landing from './assets/1.jpg';
+import landing from './assets/full-background.jpg';
 import {Music, Upload, X} from 'tabler-icons-react';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 import {useMainStyles} from "./styles/main-styles";
