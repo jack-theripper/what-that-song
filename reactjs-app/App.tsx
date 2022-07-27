@@ -8,36 +8,14 @@ import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 import {useMainStyles} from "./styles/main-styles";
 import {resizeHandler} from "./utils/resize-handler";
 import {Dropzone} from "@mantine/dropzone";
+import {TMusic} from "./types";
 
 let wavesurfer: WaveSurfer;
 let region: Region;
 
-interface ArtistT {
-    name: string;
-}
-
-interface GenreT {
-    name: string;
-}
-
-interface AlbumT {
-    name: string;
-}
-
-interface MusicT {
-    title: string;
-    artists: ArtistT[];
-    genres: GenreT[];
-    album: AlbumT;
-    duration_ms: number;
-    release_date: string;
-    score: number;
-    label: string;
-}
-
 interface PromiseRecognizeT {
     success: boolean;
-    payload: MusicT[];
+    payload: TMusic[];
 }
 
 const worker = new Worker(new URL('./workers/mp3encoder.js', import.meta.url));
@@ -47,7 +25,7 @@ function App() {
     const theme = useMantineTheme();
 
 
-    const [items, setItems] = useState<Array<MusicT>>([]);
+    const [items, setItems] = useState<Array<TMusic>>([]);
 
     /**
      * Обработчик для чтения сообщений воркера
