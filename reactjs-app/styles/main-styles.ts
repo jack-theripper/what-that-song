@@ -16,7 +16,7 @@ export const useMainStyles = createStyles((theme) => ({
         zIndex: 1,
         padding: '10em 5em',
         borderRadius: '5em',
-        background: 'rgba(255,255,255, 0.7)',
+        background: 'rgba(255,255,255, 0.8)',
     },
     title: {
         textAlign: 'center',

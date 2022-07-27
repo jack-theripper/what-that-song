@@ -1,9 +1,9 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
-import {AppShell, Button, Container, Group, Paper, Progress, Text, Title, useMantineTheme} from "@mantine/core";
+import {AppShell, Button, Container, Grid, Group, Paper, Progress, Text, Title, useMantineTheme} from "@mantine/core";
 import landing from './assets/full-background.jpg';
-import {Music, Upload, X} from 'tabler-icons-react';
+import {Cut, Music, PlayerPlay, Upload, X} from 'tabler-icons-react';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 import {useMainStyles} from "./styles/main-styles";
 import {resizeHandler} from "./utils/resize-handler";
@@ -155,8 +155,8 @@ function App() {
             container: waveRef.current,
             height: 100,
             scrollParent: true,
-            waveColor: '#ABB0BC',
-            progressColor: '#8668A3',
+            waveColor: '#9a9a9a',
+            progressColor: '#228be6',
             plugins: [
                 RegionsPlugin.create({
                     dragSelection: false
@@ -245,33 +245,32 @@ function App() {
                         Узнать название песни {' '}<Text component="span" color={theme.primaryColor} inherit>по
                         отрывку</Text>
                     </Title>
-                    <Container p={0} size={600}>
-                        <Text size="lg" color="dimmed" className={classes.description}>
+                    <Container p={'2em'} size={600}>
+                        <Text size="lg" className={classes.description}>
                             Сколько раз вы сталкивались с ситуацией, когда по радио или в видео на YouTube слышали
                             классную песню, но не знали кто ее поет, и никто в комментариях не смог сказать ее название?
                         </Text>
                     </Container>
+                    <Group align={'center'} style={{justifyContent: "center"}}>
+                        <Button size={'lg'} onClick={() => openRef.current && openRef.current()}>Выберите файл</Button>
+                        <p>или перетащите его мышкой</p>
+                    </Group>
+                </div>
 
+                <div >
+
+                    <div ref={waveRef}></div>
 
                 </div>
 
 
-                <Paper withBorder radius={'xl'}>
-                    <Button onClick={() => openRef.current && openRef.current()}>Выбрать файл</Button>
-                </Paper>
+
+
 
 
                 {(operation != null && progress < 100) && <Progress value={progress}/>}
 
-                <Paper p={'1em'} mt={'2em'} style={{display: (!hasReadyBuffer ? 'none' : 'block')}}>
-                    <p>Играет: {currentTime}, продолжительность {duration}</p>
-                    <div ref={waveRef}></div>
-                    <Group mt={'1em'}>
-                        <Button onClick={togglePlay} variant={'light'}>{playing ? 'Пауза' : 'Играть'}</Button>
-                        <Button onClick={processing} loading={operation == 'encoding' || operation == 'sending'}
-                                variant={'outline'}>{operation === 'encoding' ? 'Обрабатывается' : 'Узнать навание?'}</Button>
-                    </Group>
-                </Paper>
+
 
                 <Dropzone.FullScreen openRef={openRef}
                     active={true}
@@ -308,6 +307,34 @@ function App() {
                 </Dropzone.FullScreen>
 
             </Container>
+
+            <div style={{
+                position: 'fixed',
+                zIndex: 10,
+                bottom: '20px',
+                left: 0,
+                right: 0,
+                textAlign: "center",
+                display: !hasReadyBuffer ? 'none' : 'block'
+            }}>
+                <div style={{display: "inline-block"}}>
+                    <Paper radius={'xl'} p={"xs"} pl={'xl'} pr={'xl'} withBorder>
+                        <Group style={{justifyContent: 'center'}}>
+                            <Button onClick={togglePlay} leftIcon={<PlayerPlay/>} variant="white">
+                                {playing ? 'Пауза' : 'Играть'}
+                            </Button>
+                            <Button onClick={processing} loading={operation === 'encoding' || operation === 'sending'}
+                                    leftIcon={<Cut/>} variant={'white'}>
+                                {operation === 'encoding' ? 'Обрабатывается' : 'Узнать навание?'}
+                            </Button>
+
+                            <span style={{maxWidth: '2em', overflow: 'hidden'}}>
+                                {currentTime}/{duration}
+                            </span>
+                        </Group>
+                    </Paper>
+                </div>
+            </div>
 
         </AppShell>
     );
