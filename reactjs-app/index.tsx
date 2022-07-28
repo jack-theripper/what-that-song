@@ -5,17 +5,16 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {NavigationProgress} from "@mantine/nprogress";
 import {MantineProvider} from "@mantine/core";
+import {theme} from "./styles/theme";
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
 );
 root.render(
-    // <React.StrictMode>
-    <MantineProvider>
+    <MantineProvider theme={theme} withGlobalStyles withCSSVariables withNormalizeCSS>
         <NavigationProgress/>
         <App/>
     </MantineProvider>
-    // </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

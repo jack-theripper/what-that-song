@@ -2,10 +2,9 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
 import {AppShell, Button, Container, Group, Paper, Text, Title, useMantineTheme} from "@mantine/core";
-import landing from './assets/full-background.jpg';
 import {Cut, Music, PlayerPause, PlayerPlay, Upload, X} from 'tabler-icons-react';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
-import {useMainStyles} from "./styles/main-styles";
+import {useMainStyles} from "./styles/classes";
 import {resizeHandler} from "./utils/resize-handler";
 import {Dropzone} from "@mantine/dropzone";
 import {TMusic, TWorkerMessage} from "./types";
@@ -27,8 +26,6 @@ const worker = new Worker(new URL('./workers/mp3encoder.js', import.meta.url));
 const App: React.FC = () => {
     const {classes} = useMainStyles();
     const theme = useMantineTheme();
-
-    console.log(theme);
 
     const [items, setItems] = useState<Array<TMusic>>([]);
 
@@ -232,14 +229,7 @@ const App: React.FC = () => {
     }, []);
 
     return (
-        <AppShell padding="md" fixed={true} styles={(theme) => ({
-            root: {
-                background: `url(${landing}) no-repeat`,
-                backgroundSize: 'cover',
-                backgroundAttachment: 'fixed'
-            },
-        })}
-        >
+        <AppShell padding="md" fixed>
             <Container className={classes.wrapper} size={1400}>
                 <div className={classes.inner}>
                     <Title className={classes.title}>
@@ -262,7 +252,6 @@ const App: React.FC = () => {
                     {items.length > 0 && (<div>
                         {items.map(item => <ResultMusic key={item.acrid} item={item}/>)}
                     </div>)}
-
                 </div>
 
                 <Dropzone.FullScreen openRef={openRef}
