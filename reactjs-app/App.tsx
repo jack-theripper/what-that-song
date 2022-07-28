@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
 import {AppShell, Button, Container, Grid, Group, Paper, Progress, Text, Title, useMantineTheme} from "@mantine/core";
 import landing from './assets/full-background.jpg';
-import {Cut, Music, PlayerPlay, Upload, X} from 'tabler-icons-react';
+import {Cut, Music, PlayerPause, PlayerPlay, Upload, X} from 'tabler-icons-react';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 import {useMainStyles} from "./styles/main-styles";
 import {resizeHandler} from "./utils/resize-handler";
@@ -313,7 +313,7 @@ function App() {
                 <div style={{display: "inline-block"}}>
                     <Paper radius={'xl'} p={"xs"} pl={'xl'} pr={'xl'} withBorder>
                         <Group style={{justifyContent: 'center'}}>
-                            <Button onClick={togglePlay} leftIcon={<PlayerPlay/>} variant="white">
+                            <Button onClick={togglePlay} leftIcon={playing ? <PlayerPause /> : <PlayerPlay/>} variant="white">
                                 {playing ? 'Пауза' : 'Играть'}
                             </Button>
                             <Button onClick={processing} loading={operation === 'encoding' || operation === 'sending'}
