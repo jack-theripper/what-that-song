@@ -16,7 +16,7 @@ export type TMusic = {
         /**
          * ISRC/UPC code etc.
          */
-        [key: string]: string;
+        [key: string]: string | undefined;
     };
 
     /**
@@ -115,21 +115,25 @@ export type TMetadataMusicbrainz = {
 
 export type TMetadataDeezer = {
     track: {
-        id: number;
+        id: string;
+        name: string;
     };
-    artists: Array<{ id: number }>;
+    artists: Array<{ id?: number; name: string; }>;
     album: {
-        id: number;
+        id?: number;
+        name: string;
     };
 };
 
 export type TMetadataSpotify = {
     track: {
         id: string;
+        name?: string;
     };
-    artists: Array<{ id: string; }>;
+    artists: Array<{ id?: string; name: string; }>;
     album: {
-        id: string;
+        id?: string;
+        name: string;
     };
 };
 
@@ -141,15 +145,3 @@ export type TMetadataMusicstory = {
         id: number;
     };
 };
-
-/*
-
-  
-          
-
-
-            release_by_territories: [{territories: [DK], release_date: 2006-04-17}, {territories: [JP], release_date: 2006-10-17}, {territories: [SE], release_date: 2005-06-21}, {territories: [BG, AL, BA, CZ, EE, HR, HU, LT, LV, MK, ME, PL, RO, RS, SI, SK, UA], release_date: 2006-03-24}, {territories: [GB, IE, NZ], release_date: 2005-07-18}, {territories: [FR], release_date: 2005-07-26}]
-
-        }
-
-}*/
