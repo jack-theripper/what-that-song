@@ -22,40 +22,19 @@ interface PromiseRecognizeT {
     payload: TMusic[];
 }
 
-
 const App: React.FC = () => {
 
     const {classes} = useMainStyles();
     const theme = useMantineTheme();
 
+    const waveRef = useRef(null);
+
     const [items, setItems] = useState<Array<TMusic>>([]);
-
-
     const [manualSelect, setManualSelectFile] = useState(false);
-
-    /**
-     * Загружено ли что-то в буфер и может ли пользователь с ним взаимодействовать
-     */
     const [hasReadyBuffer, setReadyBuffer] = useState(false);
-
-    /**
-     * Флаг, который сохраняет текущее состояние - воспроизведение/пауза
-     */
     const [playing, setPlaying] = useState(false);
-
-    /**
-     * Продолжительность загруженного буфера
-     */
     const [duration, setDuration] = useState(0.0);
-
-    /**
-     * Текущая позиция воспроизведения в секундах
-     */
     const [currentTime, setCurrentTime] = useState(0);
-
-    /**
-     * Для отслеживания прогресса преобразований
-     */
     const [operation, setOperation] = useState<string | null>(null);
 
     /**
@@ -77,8 +56,6 @@ const App: React.FC = () => {
         wavesurfer.empty();
         wavesurfer.loadBlob(files[0]);
     }
-
-    const waveRef = useRef(null);
 
     /**
      * Вырезать отрезок файла и передать его в воркер для перекодирования pcm в mpeg
@@ -130,31 +107,12 @@ const App: React.FC = () => {
             ]
         });
 
-        /**
-         * Актуализируем состояние свойства 'playing'
-         */
         wavesurfer.on('play', () => setPlaying(true));
         wavesurfer.on('pause', () => setPlaying(false));
-
-        /**
-         * Обновляем позицию воспроизведения при перемотке и воспроизведении
-         */
         wavesurfer.on('seek', () => setCurrentTime(wavesurfer.getCurrentTime()));
         wavesurfer.on('audioprocess', () => setCurrentTime(wavesurfer.getCurrentTime()));
-
-        /**
-         * Если загружен новый буфер, необходимо удалить предыдущий регион
-         */
         wavesurfer.on('loading', () => wavesurfer.clearRegions());
-
-        /**
-         * Заменяем обработчик изменения размера региона, чтобы иметь возможность ограничивать размер области
-         */
         wavesurfer.Region.prototype.onResize = resizeHandler;
-
-        /**
-         * Прогресс обработки
-         */
         wavesurfer.on('loading', complete => setNavigationProgress(complete));
 
         /**
@@ -251,36 +209,26 @@ const App: React.FC = () => {
                                 название?
                             </Text>
                         </Container>
-                        <Group align={'center'} style={{justifyContent: "center"}}>
+                        <Group align={'center'} mb={'xl'}>
                             <Button size={'lg'} onClick={() => setManualSelectFile(true)}>Выберите
                                 файл</Button>
                             <p>или перетащите его мышкой</p>
                         </Group>
 
-                        <div style={{marginTop: '5em'}} ref={waveRef}></div>
+                        <div ref={waveRef}></div>
 
                         {items.length > 0 && (<div>
                             {items.map(item => <ResultMusic key={item.acrid} item={item}/>)}
                         </div>)}
                     </div>
 
-
                 </Container>
 
-                <div style={{
-                    position: 'fixed',
-                    zIndex: 10,
-                    bottom: '20px',
-                    left: 0,
-                    right: 0,
-                    textAlign: "center",
-                    display: !hasReadyBuffer ? 'none' : 'block'
-                }}>
-                    <div style={{display: "inline-block"}}>
+                <div className={classes.stickypane} style={{display: hasReadyBuffer ? 'block' : 'none'}}>
+                    <div className={classes.stickyblock}>
                         <Paper radius={'xl'} p={"xs"} pl={'xl'} pr={'xl'} withBorder>
-                            <Group style={{justifyContent: 'center'}}>
-                                <Button onClick={togglePlay} leftIcon={playing ? <PlayerPause/> : <PlayerPlay/>}
-                                        variant="white">
+                            <Group>
+                                <Button onClick={togglePlay} leftIcon={playing ? <PlayerPause/> : <PlayerPlay/>} variant="white">
                                     {playing ? 'Пауза' : 'Играть'}
                                 </Button>
                                 <Button onClick={processing}
@@ -288,10 +236,7 @@ const App: React.FC = () => {
                                         leftIcon={<Cut/>} variant={'white'}>
                                     {operation === 'encoding' ? 'Обрабатывается' : 'Узнать навание?'}
                                 </Button>
-
-                                <span style={{maxWidth: '10em', overflow: 'hidden'}}>
-                                {formattingTime(currentTime)}/{formattingTime(duration)}
-                            </span>
+                                <span>{formattingTime(currentTime)}/{formattingTime(duration)}</span>
                             </Group>
                         </Paper>
                     </div>
