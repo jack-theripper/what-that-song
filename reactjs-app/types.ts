@@ -1,4 +1,19 @@
 /**
+ * Worker Messages
+ */
+export type TWorkerMessage = TWorkerMessageProgress | TWorkerMessageProcess;
+
+export type TWorkerMessageProgress = {
+    action: 'progress';
+    payload: number;
+}
+
+export type TWorkerMessageProcess = {
+    action: 'processed';
+    payload: BlobPart[];
+}
+
+/**
  * Music fields
  */
 export type TMusic = {

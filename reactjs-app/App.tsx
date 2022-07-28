@@ -1,16 +1,18 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
-import {AppShell, Button, Container, Grid, Group, Paper, Progress, Text, Title, useMantineTheme} from "@mantine/core";
+import {AppShell, Button, Container, Group, Paper, Text, Title, useMantineTheme} from "@mantine/core";
 import landing from './assets/full-background.jpg';
 import {Cut, Music, PlayerPause, PlayerPlay, Upload, X} from 'tabler-icons-react';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 import {useMainStyles} from "./styles/main-styles";
 import {resizeHandler} from "./utils/resize-handler";
 import {Dropzone} from "@mantine/dropzone";
-import {TMusic} from "./types";
+import {TMusic, TWorkerMessage} from "./types";
 import {resetNavigationProgress, setNavigationProgress} from "@mantine/nprogress";
 import {formattingTime} from "./utils/formatting-time";
+
+import ResultMusic from "./components/ResultMusic";
 
 let wavesurfer: WaveSurfer;
 let region: Region;
@@ -22,66 +24,15 @@ interface PromiseRecognizeT {
 
 const worker = new Worker(new URL('./workers/mp3encoder.js', import.meta.url));
 
-function App() {
+const App: React.FC = () => {
     const {classes} = useMainStyles();
     const theme = useMantineTheme();
 
+    console.log(theme);
 
     const [items, setItems] = useState<Array<TMusic>>([]);
 
-    /**
-     * Обработчик для чтения сообщений воркера
-     */
-    useEffect(() => {
 
-        worker.addEventListener('message', async (event) => {
-
-            if (event.data.action !== 'processed') {
-                console.log(event.data.value.toFixed(2));
-                setNavigationProgress(event.data.value.toFixed(2));
-
-                return ;
-            }
-
-            resetNavigationProgress();
-            setOperation(null);
-
-            const data = new FormData();
-            const buffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
-
-            data.append('file', new Blob(event.data.result), 'ly');
-            data.append('channels', `${buffer.numberOfChannels}`); // typescript добавляет говнокода
-            data.append('sampleRate', `${buffer.sampleRate}`);
-
-            setOperation('sending');
-
-            try {
-                const response = await fetch('/api/recognize', {method: 'POST', body: data});
-                const result: PromiseRecognizeT = await response.json();
-
-                if (result.success) {
-                    setItems(result.payload);
-                }
-            } catch (e) {
-                alert(e);
-            } finally {
-                setOperation(null);
-            }
-        })
-
-    }, [worker])
-
-    const onDropHandler = (files: File[]) => {
-        for (let i = 0, file = files[i]; i < files.length; i++) {
-            console.log(file);
-
-            setOperation('demuxing');
-            wavesurfer.empty();
-            wavesurfer.loadBlob(file);
-
-            return;
-        }
-    }
 
     /**
      * Загружено ли что-то в буфер и может ли пользователь с ним взаимодействовать
@@ -113,7 +64,23 @@ function App() {
      */
     const togglePlay = () => wavesurfer.playPause();
 
+    /**
+     * Обработчик при выборе файла.
+     *
+     * @param files
+     */
+    const dropHandler = (files: File[]) => {
+        if (files.length < 1) {
+            return;
+        }
+
+        setOperation('demuxing');
+        wavesurfer.empty();
+        wavesurfer.loadBlob(files[0]);
+    }
+
     const waveRef = useRef(null);
+    const openRef = useRef<() => void>(null);
 
     /**
      * Вырезать отрезок файла и передать его в воркер для перекодирования pcm в mpeg
@@ -121,7 +88,6 @@ function App() {
     const processing = useCallback(() => {
         setOperation('encoding');
 
-        // Косяк при типизации. На самом деле там есть AudioBuffer
         let audioBuffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
         let sampleRate = audioBuffer.sampleRate;
 
@@ -142,7 +108,7 @@ function App() {
 
         worker.postMessage({action: 'process', buffers, sampleRate: audioBuffer.sampleRate});
 
-    }, [wavesurfer, worker]);
+    }, [wavesurfer]);
 
     /**
      * Инициализация WaveSurfer
@@ -222,16 +188,50 @@ function App() {
             /**
              * Воспроизвести фрагмент по двойному клику
              */
-            region.on('dblclick', () => region.play()/*wavesurfer.play(region.start, region.end)*/);
+            region.on('dblclick', () => wavesurfer.play(region.start, region.end));
 
         });
 
     }, [waveRef]);
 
-    const openRef = useRef<() => void>(null);
+    /**
+     * Обработчик для чтения сообщений воркера
+     */
+    useEffect(() => {
+
+        worker.addEventListener('message', async (event: MessageEvent<TWorkerMessage>) => {
+
+            if (event.data.action === "progress") {
+                return setNavigationProgress(event.data.payload);
+            }
+
+            resetNavigationProgress();
+            setOperation('sending');
+
+            const data = new FormData();
+            const buffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
+
+            data.append('file', new Blob(event.data.payload), 'ly');
+            data.append('channels', `${buffer.numberOfChannels}`); // typescript добавляет говнокода
+            data.append('sampleRate', `${buffer.sampleRate}`);
+
+            try {
+                const response = await fetch('https://what-that-song.herokuapp.com/api/recognize', {method: 'POST', body: data});
+                const result: PromiseRecognizeT = await response.json();
+
+                if (result.success) {
+                    setItems(result.payload);
+                }
+            } catch (e) {
+                alert(e);
+            } finally {
+                setOperation(null);
+            }
+        })
+
+    }, []);
 
     return (
-
         <AppShell padding="md" fixed={true} styles={(theme) => ({
             root: {
                 background: `url(${landing}) no-repeat`,
@@ -240,7 +240,6 @@ function App() {
             },
         })}
         >
-
             <Container className={classes.wrapper} size={1400}>
                 <div className={classes.inner}>
                     <Title className={classes.title}>
@@ -257,18 +256,19 @@ function App() {
                         <Button size={'lg'} onClick={() => openRef.current && openRef.current()}>Выберите файл</Button>
                         <p>или перетащите его мышкой</p>
                     </Group>
-                </div>
 
-                <div >
+                    <div style={{marginTop: '5em'}} ref={waveRef}></div>
 
-                    <div ref={waveRef}></div>
+                    {items.length > 0 && (<div>
+                        {items.map(item => <ResultMusic key={item.acrid} item={item}/>)}
+                    </div>)}
 
                 </div>
 
                 <Dropzone.FullScreen openRef={openRef}
                     active={true}
                     accept={['audio/*', 'video/*']}
-                    onDrop={onDropHandler}
+                    onDrop={dropHandler}
                                      onReject={(files) => console.log('rejected files', files)}
                 >
                     <Group position="center" spacing="xl" style={{ minHeight: 220, pointerEvents: 'none' }}>
@@ -331,6 +331,6 @@ function App() {
 
         </AppShell>
     );
-}
+};
 
 export default App;
