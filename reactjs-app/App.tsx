@@ -10,6 +10,7 @@ import {resizeHandler} from "./utils/resize-handler";
 import {Dropzone} from "@mantine/dropzone";
 import {TMusic} from "./types";
 import {resetNavigationProgress, setNavigationProgress} from "@mantine/nprogress";
+import {formattingTime} from "./utils/formatting-time";
 
 let wavesurfer: WaveSurfer;
 let region: Region;
@@ -320,8 +321,8 @@ function App() {
                                 {operation === 'encoding' ? 'Обрабатывается' : 'Узнать навание?'}
                             </Button>
 
-                            <span style={{maxWidth: '2em', overflow: 'hidden'}}>
-                                {currentTime}/{duration}
+                            <span style={{maxWidth: '10em', overflow: 'hidden'}}>
+                                {formattingTime(currentTime)}/{formattingTime(duration)}
                             </span>
                         </Group>
                     </Paper>
