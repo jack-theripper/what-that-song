@@ -2,17 +2,17 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
 import {AppShell, Button, Container, Group, Paper, Text, Title, useMantineTheme} from "@mantine/core";
-import {Cut, Music, PlayerPause, PlayerPlay, Upload, X} from 'tabler-icons-react';
+import {Cut, PlayerPause, PlayerPlay} from 'tabler-icons-react';
 import {WaveSurferBackend} from "wavesurfer.js/types/backend";
 import {useMainStyles} from "./styles/classes";
 import {resizeHandler} from "./utils/resize-handler";
-import {Dropzone} from "@mantine/dropzone";
 import {TMusic, TWorkerMessage} from "./types";
 import {resetNavigationProgress, setNavigationProgress} from "@mantine/nprogress";
 import {formattingTime} from "./utils/formatting-time";
 import worker from './workers';
 
 import ResultMusic from "./components/ResultMusic";
+import SelectFileComponent from "./components/SelectFileComponent";
 
 let wavesurfer: WaveSurfer;
 let region: Region;
@@ -24,12 +24,14 @@ interface PromiseRecognizeT {
 
 
 const App: React.FC = () => {
+
     const {classes} = useMainStyles();
     const theme = useMantineTheme();
 
     const [items, setItems] = useState<Array<TMusic>>([]);
 
 
+    const [manualSelect, setManualSelectFile] = useState(false);
 
     /**
      * Загружено ли что-то в буфер и может ли пользователь с ним взаимодействовать
@@ -77,7 +79,6 @@ const App: React.FC = () => {
     }
 
     const waveRef = useRef(null);
-    const openRef = useRef<() => void>(null);
 
     /**
      * Вырезать отрезок файла и передать его в воркер для перекодирования pcm в mpeg
@@ -213,7 +214,10 @@ const App: React.FC = () => {
             data.append('sampleRate', `${buffer.sampleRate}`);
 
             try {
-                const response = await fetch('https://what-that-song.herokuapp.com/api/recognize', {method: 'POST', body: data});
+                const response = await fetch('https://what-that-song.herokuapp.com/api/recognize', {
+                    method: 'POST',
+                    body: data
+                });
                 const result: PromiseRecognizeT = await response.json();
 
                 if (result.success) {
@@ -229,96 +233,72 @@ const App: React.FC = () => {
     }, []);
 
     return (
-        <AppShell padding="md" fixed>
-            <Container className={classes.wrapper} size={1400}>
-                <div className={classes.inner}>
-                    <Title className={classes.title}>
-                        Узнать название песни {' '}<Text component="span" color={theme.primaryColor} inherit>по
-                        отрывку</Text>
-                    </Title>
-                    <Container p={'2em'} size={600}>
-                        <Text size="lg" className={classes.description}>
-                            Сколько раз вы сталкивались с ситуацией, когда по радио или в видео на YouTube слышали
-                            классную песню, но не знали кто ее поет, и никто в комментариях не смог сказать ее название?
-                        </Text>
-                    </Container>
-                    <Group align={'center'} style={{justifyContent: "center"}}>
-                        <Button size={'lg'} onClick={() => openRef.current && openRef.current()}>Выберите файл</Button>
-                        <p>или перетащите его мышкой</p>
-                    </Group>
+        <>
 
-                    <div style={{marginTop: '5em'}} ref={waveRef}></div>
+            <SelectFileComponent showSelect={manualSelect} onDrop={dropHandler} onReject={() => null}/>
 
-                    {items.length > 0 && (<div>
-                        {items.map(item => <ResultMusic key={item.acrid} item={item}/>)}
-                    </div>)}
-                </div>
-
-                <Dropzone.FullScreen openRef={openRef}
-                    active={true}
-                    accept={['audio/*', 'video/*']}
-                    onDrop={dropHandler}
-                                     onReject={(files) => console.log('rejected files', files)}
-                >
-                    <Group position="center" spacing="xl" style={{ minHeight: 220, pointerEvents: 'none' }}>
-                        <Dropzone.Accept>
-                            <Upload
-                                size={50}
-                                color={theme.colors[theme.primaryColor][theme.colorScheme === 'dark' ? 4 : 6]}
-                            />
-                        </Dropzone.Accept>
-                        <Dropzone.Reject>
-                            <X
-                                size={50}
-                                color={theme.colors.red[theme.colorScheme === 'dark' ? 4 : 6]}
-                            />
-                        </Dropzone.Reject>
-                        <Dropzone.Idle>
-                            <Music size={50}  />
-                        </Dropzone.Idle>
-
-                        <div>
-                            <Text size="xl" inline>
-                                Выберите аудио или видео отрезок,
+            <AppShell padding="md" fixed>
+                <Container className={classes.wrapper} size={1400}>
+                    <div className={classes.inner}>
+                        <Title className={classes.title}>
+                            Узнать название песни {' '}<Text component="span" color={theme.primaryColor} inherit>по
+                            отрывку</Text>
+                        </Title>
+                        <Container p={'2em'} size={600}>
+                            <Text size="lg" className={classes.description}>
+                                Сколько раз вы сталкивались с ситуацией, когда по радио или в видео на YouTube слышали
+                                классную песню, но не знали кто ее поет, и никто в комментариях не смог сказать ее
+                                название?
                             </Text>
-                            <Text size="sm" color="dimmed" inline mt={7}>
-                                отметьте фрагмент и найдите название композиции!
-                            </Text>
-                        </div>
-                    </Group>
-                </Dropzone.FullScreen>
+                        </Container>
+                        <Group align={'center'} style={{justifyContent: "center"}}>
+                            <Button size={'lg'} onClick={() => setManualSelectFile(true)}>Выберите
+                                файл</Button>
+                            <p>или перетащите его мышкой</p>
+                        </Group>
 
-            </Container>
+                        <div style={{marginTop: '5em'}} ref={waveRef}></div>
 
-            <div style={{
-                position: 'fixed',
-                zIndex: 10,
-                bottom: '20px',
-                left: 0,
-                right: 0,
-                textAlign: "center",
-                display: !hasReadyBuffer ? 'none' : 'block'
-            }}>
-                <div style={{display: "inline-block"}}>
-                    <Paper radius={'xl'} p={"xs"} pl={'xl'} pr={'xl'} withBorder>
-                        <Group style={{justifyContent: 'center'}}>
-                            <Button onClick={togglePlay} leftIcon={playing ? <PlayerPause /> : <PlayerPlay/>} variant="white">
-                                {playing ? 'Пауза' : 'Играть'}
-                            </Button>
-                            <Button onClick={processing} loading={operation === 'encoding' || operation === 'sending'}
-                                    leftIcon={<Cut/>} variant={'white'}>
-                                {operation === 'encoding' ? 'Обрабатывается' : 'Узнать навание?'}
-                            </Button>
+                        {items.length > 0 && (<div>
+                            {items.map(item => <ResultMusic key={item.acrid} item={item}/>)}
+                        </div>)}
+                    </div>
 
-                            <span style={{maxWidth: '10em', overflow: 'hidden'}}>
+
+                </Container>
+
+                <div style={{
+                    position: 'fixed',
+                    zIndex: 10,
+                    bottom: '20px',
+                    left: 0,
+                    right: 0,
+                    textAlign: "center",
+                    display: !hasReadyBuffer ? 'none' : 'block'
+                }}>
+                    <div style={{display: "inline-block"}}>
+                        <Paper radius={'xl'} p={"xs"} pl={'xl'} pr={'xl'} withBorder>
+                            <Group style={{justifyContent: 'center'}}>
+                                <Button onClick={togglePlay} leftIcon={playing ? <PlayerPause/> : <PlayerPlay/>}
+                                        variant="white">
+                                    {playing ? 'Пауза' : 'Играть'}
+                                </Button>
+                                <Button onClick={processing}
+                                        loading={operation === 'encoding' || operation === 'sending'}
+                                        leftIcon={<Cut/>} variant={'white'}>
+                                    {operation === 'encoding' ? 'Обрабатывается' : 'Узнать навание?'}
+                                </Button>
+
+                                <span style={{maxWidth: '10em', overflow: 'hidden'}}>
                                 {formattingTime(currentTime)}/{formattingTime(duration)}
                             </span>
-                        </Group>
-                    </Paper>
+                            </Group>
+                        </Paper>
+                    </div>
                 </div>
-            </div>
 
-        </AppShell>
+            </AppShell>
+        </>
     );
 };
 
