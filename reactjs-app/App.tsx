@@ -10,6 +10,7 @@ import {Dropzone} from "@mantine/dropzone";
 import {TMusic, TWorkerMessage} from "./types";
 import {resetNavigationProgress, setNavigationProgress} from "@mantine/nprogress";
 import {formattingTime} from "./utils/formatting-time";
+import worker from './workers';
 
 import ResultMusic from "./components/ResultMusic";
 
@@ -21,7 +22,6 @@ interface PromiseRecognizeT {
     payload: TMusic[];
 }
 
-const worker = new Worker(new URL('./workers/mp3encoder.js', import.meta.url));
 
 const App: React.FC = () => {
     const {classes} = useMainStyles();
