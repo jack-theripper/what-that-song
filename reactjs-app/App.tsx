@@ -9,6 +9,7 @@ import {useMainStyles} from "./styles/main-styles";
 import {resizeHandler} from "./utils/resize-handler";
 import {Dropzone} from "@mantine/dropzone";
 import {TMusic} from "./types";
+import {resetNavigationProgress, setNavigationProgress} from "@mantine/nprogress";
 
 let wavesurfer: WaveSurfer;
 let region: Region;
@@ -35,12 +36,13 @@ function App() {
         worker.addEventListener('message', async (event) => {
 
             if (event.data.action !== 'processed') {
-                setProgress(event.data.value.toFixed(2));
+                console.log(event.data.value.toFixed(2));
+                setNavigationProgress(event.data.value.toFixed(2));
 
                 return ;
             }
 
-            setProgress(100);
+            resetNavigationProgress();
             setOperation(null);
 
             const data = new FormData();
@@ -103,7 +105,6 @@ function App() {
     /**
      * Для отслеживания прогресса преобразований
      */
-    const [progress, setProgress] = useState(0);
     const [operation, setOperation] = useState<string | null>(null);
 
     /**
@@ -189,16 +190,16 @@ function App() {
         /**
          * Прогресс обработки
          */
-        wavesurfer.on('loading', complete => setProgress(complete));
+        wavesurfer.on('loading', complete => setNavigationProgress(complete));
 
         /**
          * В буфер что-то загружено, с этим нужно поработать
          */
         wavesurfer.on('ready', () => {
-            setProgress(100);
             setOperation(null);
             setReadyBuffer(true);
             setDuration(wavesurfer.getDuration());
+            resetNavigationProgress();
 
             /**
              * Пересоздать регион
@@ -262,15 +263,6 @@ function App() {
                     <div ref={waveRef}></div>
 
                 </div>
-
-
-
-
-
-
-                {(operation != null && progress < 100) && <Progress value={progress}/>}
-
-
 
                 <Dropzone.FullScreen openRef={openRef}
                     active={true}

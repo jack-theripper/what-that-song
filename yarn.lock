@@ -1623,6 +1623,13 @@
   resolved "https://registry.yarnpkg.com/@mantine/hooks/-/hooks-5.0.0.tgz#24fe9f945810d02ad7d933b8aecc646cf10f96dc"
   integrity sha512-IKqqnukPPyBMYRKz4VIhz7hNRe3p8B7RUyvFLaWc9l69ZO/b5atNuesE1ThuMQYc7tBobQbU4myHuhQc/csyLA==
 
+"@mantine/nprogress@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@mantine/nprogress/-/nprogress-5.0.0.tgz#aa212ea19284dbf8258bf4178d584ea92ee6c0a0"
+  integrity sha512-T+bXYfNJOZoDKXWl+Hum8OrNyysDaAlFrDOUQnjoRaFCir6LNPHZJeYvKDA/gj/UgC35WmU79Bc2iToC1LXHbg==
+  dependencies:
+    "@mantine/utils" "5.0.0"
+
 "@mantine/styles@5.0.0":
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/@mantine/styles/-/styles-5.0.0.tgz#526fb8fea1be280b18f852d790a6b8d05c9c97e5"
