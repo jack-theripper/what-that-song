@@ -5,7 +5,7 @@ import {Music, Upload, X} from "tabler-icons-react";
 import {FileRejection} from "react-dropzone";
 
 interface SelectFileComponentProps {
-    showSelect: boolean;
+    showSelect: any;
     onDrop(files: File[]): void;
     onReject(fileRejections: FileRejection[]): void;
 }
@@ -16,7 +16,7 @@ const SelectFileComponent: React.FC<SelectFileComponentProps> = ({showSelect, on
     const ref = useRef<() => void>(null);
 
     useEffect(() => {
-        if (showSelect && ref.current) ref.current()
+        if (ref.current) ref.current()
     }, [showSelect]);
 
     return (

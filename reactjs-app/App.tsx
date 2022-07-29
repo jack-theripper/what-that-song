@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useReducer, useRef, useState} from 'react';
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, {Region} from 'wavesurfer.js/src/plugin/regions';
 import {AppShell, Button, Container, Group, Paper, Text, Title, useMantineTheme} from "@mantine/core";
@@ -30,12 +30,13 @@ const App: React.FC = () => {
     const waveRef = useRef(null);
 
     const [items, setItems] = useState<Array<TMusic>>([]);
-    const [manualSelect, setManualSelectFile] = useState(false);
     const [hasReadyBuffer, setReadyBuffer] = useState(false);
     const [playing, setPlaying] = useState(false);
     const [duration, setDuration] = useState(0.0);
     const [currentTime, setCurrentTime] = useState(0);
     const [operation, setOperation] = useState<string | null>(null);
+
+    const [isManualSelect, toggleManualSelectFile] = useReducer(state => !state, false);
 
     /**
      * Воспроизведение/пауза
@@ -193,7 +194,7 @@ const App: React.FC = () => {
     return (
         <>
 
-            <SelectFileComponent showSelect={manualSelect} onDrop={dropHandler} onReject={() => null}/>
+            <SelectFileComponent showSelect={isManualSelect} onDrop={dropHandler} onReject={() => null}/>
 
             <AppShell padding="md" fixed>
                 <Container className={classes.wrapper} size={1400}>
@@ -210,7 +211,7 @@ const App: React.FC = () => {
                             </Text>
                         </Container>
                         <Group align={'center'} mb={'xl'}>
-                            <Button size={'lg'} onClick={() => setManualSelectFile(true)}>Выберите
+                            <Button size={'lg'} onClick={toggleManualSelectFile}>Выберите
                                 файл</Button>
                             <p>или перетащите его мышкой</p>
                         </Group>
