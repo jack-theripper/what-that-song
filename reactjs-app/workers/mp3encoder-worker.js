@@ -39,5 +39,5 @@ self.onmessage = (event) => {
         chunks.push(buffer);
     }
 
-    postMessage({action: 'processed', result: chunks}); // отправляем перекодированные в mp3 чанки
+    postMessage({action: 'processed', payload: chunks}); // отправляем перекодированные в mp3 чанки
 };
