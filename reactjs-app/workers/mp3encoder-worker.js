@@ -29,7 +29,7 @@ self.onmessage = (event) => {
         }
 
         if (i % 10 === 0) {
-            self.postMessage({action: 'progress', value: 100 / (length / i)});
+            self.postMessage({action: 'progress', payload: 100 / (length / i)});
         }
     }
 
