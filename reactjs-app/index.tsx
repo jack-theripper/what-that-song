@@ -1,11 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {NavigationProgress} from "@mantine/nprogress";
 import {MantineProvider} from "@mantine/core";
+import {NotificationsProvider} from "@mantine/notifications";
 import {theme} from "./styles/theme";
+import App from './App';
+import './index.css';
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
@@ -13,7 +14,9 @@ const root = ReactDOM.createRoot(
 root.render(
     <MantineProvider theme={theme} withGlobalStyles withCSSVariables withNormalizeCSS>
         <NavigationProgress/>
-        <App/>
+        <NotificationsProvider>
+            <App/>
+        </NotificationsProvider>
     </MantineProvider>
 );
 

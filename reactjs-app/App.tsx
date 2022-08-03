@@ -9,19 +9,14 @@ import {resizeHandler} from "./utils/resize-handler";
 import {TMusic, TWorkerMessage} from "./types";
 import {resetNavigationProgress, setNavigationProgress} from "@mantine/nprogress";
 import {formattingTime} from "./utils/formatting-time";
-import worker from './workers';
-
 import ResultMusic from "./components/ResultMusic";
 import SelectFileComponent from "./components/SelectFileComponent";
 import RecognizeService from "./services/RecognizeService";
+import {showNotification} from "@mantine/notifications";
+import worker from './workers';
 
 let wavesurfer: WaveSurfer;
 let region: Region;
-
-interface PromiseRecognizeT {
-    success: boolean;
-    payload: TMusic[];
-}
 
 const App: React.FC = () => {
 
@@ -39,16 +34,7 @@ const App: React.FC = () => {
 
     const [isManualSelect, toggleManualSelectFile] = useReducer(state => !state, false);
 
-    /**
-     * Воспроизведение/пауза
-     */
     const togglePlay = () => wavesurfer.playPause();
-
-    /**
-     * Обработчик при выборе файла.
-     *
-     * @param files
-     */
     const dropHandler = (files: File[]) => {
         if (files.length < 1) {
             return;
@@ -59,9 +45,6 @@ const App: React.FC = () => {
         wavesurfer.loadBlob(files[0]);
     }
 
-    /**
-     * Вырезать отрезок файла и передать его в воркер для перекодирования pcm в mpeg
-     */
     const processing = useCallback(() => {
         setOperation('encoding');
 
@@ -171,9 +154,8 @@ const App: React.FC = () => {
 
                 RecognizeService.fetchResults(event.data.payload, buffer.numberOfChannels, buffer.sampleRate)
                     .then(result => setItems(result.payload))
-                    .catch(message => alert(message))
-                    .finally(() => setOperation(null));
-
+                    .catch(error => showNotification({title: 'Бесподобный трек 🤥', message: error.message}))
+                    .finally(() => setOperation(null))
             }
 
         })
@@ -182,9 +164,7 @@ const App: React.FC = () => {
 
     return (
         <>
-
             <SelectFileComponent showSelect={isManualSelect} onDrop={dropHandler} onReject={() => null}/>
-
             <AppShell padding="md" fixed>
                 <Container className={classes.wrapper} size={1400}>
                     <div className={classes.inner}>
@@ -204,16 +184,12 @@ const App: React.FC = () => {
                                 файл</Button>
                             <p>или перетащите его мышкой</p>
                         </Group>
-
                         <div ref={waveRef}></div>
-
                         {items.length > 0 && (<div>
                             {items.map(item => <ResultMusic key={item.acrid} item={item}/>)}
                         </div>)}
                     </div>
-
                 </Container>
-
                 <div className={classes.stickypane} style={{display: hasReadyBuffer ? 'block' : 'none'}}>
                     <div className={classes.stickyblock}>
                         <Paper radius={'xl'} p={"xs"} pl={'xl'} pr={'xl'} withBorder>
@@ -231,7 +207,6 @@ const App: React.FC = () => {
                         </Paper>
                     </div>
                 </div>
-
             </AppShell>
         </>
     );
