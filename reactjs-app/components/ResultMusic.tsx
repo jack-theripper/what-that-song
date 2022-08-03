@@ -6,7 +6,6 @@ interface ResultMusicProps {
 }
 
 const ResultMusic: React.FC<ResultMusicProps> = ({item}) => {
-
     const artist = useMemo<string>(() => item.artists.map(artist => artist.name).join(', '), [item.artists]);
 
     return (
@@ -31,12 +30,7 @@ const ResultMusic: React.FC<ResultMusicProps> = ({item}) => {
                         <li>https://musicbrainz.org/recording/{item.track.id}</li>
                     ))
                 )}
-
-
-
             </ul>
-
-
         </div>
     );
 };

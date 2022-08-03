@@ -52,6 +52,8 @@
     ]
   },
   "devDependencies": {
-    "react-app-rewired": "^2.2.1"
+    "@types/react-test-renderer": "^18.0.0",
+    "react-app-rewired": "^2.2.1",
+    "react-test-renderer": "^18.2.0"
   }
 }
