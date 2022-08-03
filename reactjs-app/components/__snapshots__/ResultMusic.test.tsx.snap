@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ResultMusic component it rendering 1`] = `
+<div>
+  <h3>
+    LAZZY2WICE - 
+    Do You Pray?
+     (совпадение 
+    100
+    %)
+  </h3>
+  <ul>
+    <li>
+      Альбом: 
+      The Blind Victim
+    </li>
+    <li>
+      Жанры: 
+    </li>
+    <li>
+      Лэйбл: 
+      MERLIN - LazzyMusic
+    </li>
+    <li>
+      Дата релиза: 
+      2022-07-15
+    </li>
+  </ul>
+</div>
+`;

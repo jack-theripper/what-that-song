@@ -9,6 +9,7 @@ module.exports = {
     },
     jest: function (config, env) {
         config.roots = ['<rootDir>/reactjs-app'];
+        config.setupFilesAfterEnv = ["<rootDir>/reactjs-app/setupTests.ts"];
         config.testMatch = [
             '<rootDir>/reactjs-app/**/__tests__/**/*.{js,jsx,ts,tsx}',
             '<rootDir>/reactjs-app/**/*.{spec,test}.{js,jsx,ts,tsx}'
