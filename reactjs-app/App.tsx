@@ -13,6 +13,7 @@ import worker from './workers';
 
 import ResultMusic from "./components/ResultMusic";
 import SelectFileComponent from "./components/SelectFileComponent";
+import RecognizeService from "./services/RecognizeService";
 
 let wavesurfer: WaveSurfer;
 let region: Region;
@@ -162,31 +163,19 @@ const App: React.FC = () => {
                 return setNavigationProgress(event.data.payload);
             }
 
-            resetNavigationProgress();
-            setOperation('sending');
+            if (event.data.action === 'processed') {
+                resetNavigationProgress();
+                setOperation('sending');
 
-            const data = new FormData();
-            const buffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
+                const buffer = (wavesurfer.backend as WaveSurferBackend & { buffer: AudioBuffer }).buffer;
 
-            data.append('file', new Blob(event.data.payload), 'ly');
-            data.append('channels', `${buffer.numberOfChannels}`); // typescript добавляет говнокода
-            data.append('sampleRate', `${buffer.sampleRate}`);
+                RecognizeService.fetchResults(event.data.payload, buffer.numberOfChannels, buffer.sampleRate)
+                    .then(result => setItems(result.payload))
+                    .catch(message => alert(message))
+                    .finally(() => setOperation(null));
 
-            try {
-                const response = await fetch('https://what-that-song.herokuapp.com/api/recognize', {
-                    method: 'POST',
-                    body: data
-                });
-                const result: PromiseRecognizeT = await response.json();
-
-                if (result.success) {
-                    setItems(result.payload);
-                }
-            } catch (e) {
-                alert(e);
-            } finally {
-                setOperation(null);
             }
+
         })
 
     }, []);
