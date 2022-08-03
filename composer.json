@@ -1,12 +1,18 @@
 {
-    "require": {
-        "php": "^7.4",
-        "ext-phalcon": "^4.1.0",
-        "symfony/process": "^5.4.0",
-        "guzzlehttp/guzzle": "^6.3.0"
-    },
-    "require-dev": {
-        "phalcon/ide-stubs": "^4.1.0",
-        "heroku/heroku-buildpack-php": "^222.0"
+  "autoload": {
+    "psr-4": {
+      "Arhitector\\WhatThatSong\\": "./php-app/src"
     }
+  },
+  "require": {
+    "php": "^7.4",
+    "ext-phalcon": "^4.1.0",
+    "symfony/process": "^5.4.0",
+    "guzzlehttp/guzzle": "^6.3.0",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "phalcon/ide-stubs": "^4.1.0",
+    "heroku/heroku-buildpack-php": "^222.0"
+  }
 }

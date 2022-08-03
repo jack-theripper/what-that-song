@@ -1,14 +1,15 @@
 <?php
 
-use GuzzleHttp\RequestOptions;
+use Arhitector\WhatThatSong\Identify;
+use Arhitector\WhatThatSong\Processing;
+use Phalcon\DI\FactoryDefault;
 use Phalcon\Mvc\Micro;
 use Symfony\Component\Process\ExecutableFinder;
-use Symfony\Component\Process\Process;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 // Initializing a DI Container
-$di = new \Phalcon\DI\FactoryDefault();
+$di = new FactoryDefault();
 
 /**
  * Overriding Response-object to set the Content-type header globally
@@ -24,26 +25,6 @@ $di->setShared('response', function () {
 });
 
 $app = new Micro($di);
-
-/**
- * Функция проверки, что пришли нужные данные т.е конвертированный pcm в lame
- *
- * @param $rawBytes
- * @return bool
- */
-function checkBytes($rawBytes)
-{
-	if ($rawBytes != 'ID3') {
-		$bytes[0] = ord($rawBytes[0]);
-		$bytes[1] = ord($rawBytes[1]);
-
-		if (($bytes[0] & 0xFF) != 0xFF || (($bytes[1] >> 5) & 0b111) != 0b111) {
-			return false;
-		}
-	}
-
-	return true;
-}
 
 $app->get('/api', function () {
 	return ['success' => true];
@@ -77,57 +58,23 @@ $app->post('/api/recognize', function () {
 		return ['success' => false, 'message' => 'Ffmpeg is not available'];
 	}
 
-	$handle = fopen($file->getTempName(), 'rb');
-
-	if (!checkBytes(fread($handle, 3))) {
-		return ['success' => false, 'message' => 'Wrong data'];
-	}
-
-	fseek($handle, 0); // т.е. я читал первые байты в checkBytes, то нужно сбросить указатель
-
 	// self
-	$requrl = "http://identify-eu-west-1.acrcloud.com/v1/identify";
+	$requrl = "http://identify-eu-west-1.acrcloud.com";
 	$access_key = getenv('_ACCESS_KEY');
 	$access_secret = getenv('_ACCESS_SECRET');
 
-//	$process = new Process("\"{$ffmpegPath}\" -y -stdin -f mp3 -i - -ss 0 -t 15 -f mp3 -ar 44100 -");
-	$process = new Process([$ffmpegPath, '-y', '-stdin', '-f', 'mp3', '-i', '-', '-ss', 0, '-t', 15, '-f', 'mp3', '-ar', 44100, '-']);
-	$process->setInput($handle);
+    $bus = [
+        new Processing($ffmpegPath, $file),
+        new Identify($requrl, $access_key, $access_secret),
+        fn(string $response) => json_decode($response, false)
+    ];
 
-	try
-	{
-		$process->mustRun();
-	}
-	catch (\Exception $exception)
-	{
-		file_put_contents($this->logPath.$this->logName.'.log', $exception->getMessage());
-	}
+    $result = null;
 
-	$client = new \GuzzleHttp\Client([
-		RequestOptions::HTTP_ERRORS => false,
-		RequestOptions::VERIFY      => false
-	]);
+    foreach ($bus as $entry) {
+        $result = $entry($result);
+    }
 
-	$timestamp = time();
-	$output = $process->getOutput();
-	$signature = implode("\n", ['POST', '/v1/identify', $access_key, 'audio', 1, $timestamp]);
-
-	// request
-	$response = $client->post($requrl, [
-		RequestOptions::FORM_PARAMS => [
-			'access_key'        => $access_key,
-			'data_type'         => 'audio',
-			'sample'            => base64_encode($output),
-			'sample_bytes'      => strlen($output),
-			'signature_version' => 1,
-			'signature'         => base64_encode(hash_hmac('sha1', $signature, $access_secret, true)),
-			'timestamp'         => $timestamp,
-			'audio_format'      => 'mp3'
-		]
-	]);
-
-	// parsing
-	$result = json_decode((string) $response->getBody(), false);
 	$response = ['success' => false];
 
 	switch ($result->status->code)
@@ -222,6 +169,4 @@ $app->after(function () use ($app) {
 	$app->response->send();
 });
 
-$app->handle(
-	$_SERVER["REQUEST_URI"]
-);
+$app->handle($_SERVER["REQUEST_URI"]);
