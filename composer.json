@@ -9,7 +9,8 @@
     "ext-phalcon": "^4.1.0",
     "symfony/process": "^5.4.0",
     "guzzlehttp/guzzle": "^6.3.0",
-    "ext-json": "*"
+    "ext-json": "*",
+    "longman/telegram-bot": "^0.78.0"
   },
   "require-dev": {
     "phalcon/ide-stubs": "^4.1.0",
