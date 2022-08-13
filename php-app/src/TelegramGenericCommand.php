@@ -42,10 +42,9 @@ class TelegramGenericCommand extends SystemCommand
 
         $filePath = $this->getTelegram()->getDownloadPath() . DIRECTORY_SEPARATOR . $fileResponse->getResult()->getFilePath();
 
-        // self
-        $requrl = "http://identify-eu-west-1.acrcloud.com";
-        $access_key = getenv('_ACCESS_KEY');
-        $access_secret = getenv('_ACCESS_SECRET');
+        $host = getenv('ACRCLOUD_HOST');
+        $accessKey = getenv('ACRCLOUD_ACCESS_KEY');
+        $accessSecret = getenv('ACRCLOUD_ACCESS_SECRET');
 
         try {
             if (($ffmpegPath = (new ExecutableFinder())->find('ffmpeg', false)) === false) {
@@ -54,7 +53,7 @@ class TelegramGenericCommand extends SystemCommand
 
             $bus = [
                 new Processing($ffmpegPath, new File(['tmp_name' => $filePath]), false),
-                new Identify($requrl, $access_key, $access_secret),
+                new Identify("https://{$host}", $accessKey, $accessSecret),
                 fn(string $response) => json_decode($response, false)
             ];
 

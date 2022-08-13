@@ -63,14 +63,13 @@ $app->post('/api/recognize', function () {
         return ['success' => false, 'message' => 'Ffmpeg is not available'];
     }
 
-    // self
-    $requrl = "http://identify-eu-west-1.acrcloud.com";
-    $access_key = getenv('_ACCESS_KEY');
-    $access_secret = getenv('_ACCESS_SECRET');
+    $host = getenv('ACRCLOUD_HOST');
+    $accessKey = getenv('ACRCLOUD_ACCESS_KEY');
+    $accessSecret = getenv('ACRCLOUD_ACCESS_SECRET');
 
     $bus = [
         new Processing($ffmpegPath, $file),
-        new Identify($requrl, $access_key, $access_secret),
+        new Identify("https://{$host}", $accessKey, $accessSecret),
         fn(string $response) => json_decode($response, false)
     ];
 
