@@ -3,24 +3,21 @@
 use Arhitector\WhatThatSong\Identify;
 use Arhitector\WhatThatSong\Processing;
 use Arhitector\WhatThatSong\TelegramGenericCommand;
-use Longman\TelegramBot\Entities\Update;
-use Longman\TelegramBot\Exception\TelegramException;
-use Longman\TelegramBot\Request;
 use Longman\TelegramBot\Telegram;
 use Phalcon\DI\FactoryDefault;
+use Phalcon\Http\Response;
 use Phalcon\Mvc\Micro;
 use Symfony\Component\Process\ExecutableFinder;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Initializing a DI Container
 $di = new FactoryDefault();
 
 /**
- * Overriding Response-object to set the Content-type header globally
+ * Переопределить дефолтный Response чтобы на лету менять Content-type
  */
 $di->setShared('response', function () {
-    $response = new \Phalcon\Http\Response();
+    $response = new Response();
     $response->setContentType('application/json', 'utf-8');
     $response->setHeader('Access-Control-Allow-Origin', '*');
     $response->setHeader('Access-Control-Allow-Header', 'X-Requested-With, Content-Type, Accept, Origin, Authorization');
@@ -79,70 +76,11 @@ $app->post('/api/recognize', function () {
         $result = $entry($result);
     }
 
-    $response = ['success' => false];
-
-    switch ($result->status->code) {
-        case 0: // Recognition succeed
-            return ['success' => true, 'payload' => (array)$result->metadata->music];
-
-
-        case 1001: // No recognition result
-
-            $response['message'] = 'Результатов не найдено';
-
-            break;
-
-        case 2000: // Recording error (device may not have permission)
-
-            $response['message'] = 'Recording error (device may not have permission)';
-
-            break;
-
-        case 3000: // Recognition service error（http error 500）
-
-            $response['message'] = 'Recognition service error（http error 500）';
-
-            break;
-
-        case 2005: // Timeout
-
-            $response['message'] = 'Operation timeout';
-
-            break;
-
-        case 2004: // Unable to generate fingerprint
-
-            $response['message'] = 'Unable to generate fingerprint';
-
-            break;
-
-        case 2002: // Metadata parse error
-        case 3011: // metadata error
-
-            $response['message'] = 'Metadata parse error';
-
-            break;
-
-        case 3001: // Missing/Invalid Access Key
-        case 3002: // Invalid ContentType. valid Content-Type is multipart/form-data
-        case 3006: // Invalid parameters
-        case 3014: // Invalid Signature
-        case 3015: // Could not generate fingerprint
-
-            $response['message'] = 'Could not generate fingerprint';
-
-            break;
-
-        case 3003: // Limit exceeded
-        case 3016: // The file you uploaded was too large, we sugguest you cut large file to smaller file, 10-20 seconds audio file is enough to identify
-
-            $response['message'] = 'Limit exceeded';
-
-            break;
-
+    if ($result->status->code == 0) { // Recognition succeed
+        return ['success' => true, 'payload' => (array)$result->metadata->music];
     }
 
-    return $response;
+    return ['success' => false, 'message' => sprintf('%d: %s', $result->status->code, $result->status->msg)];
 });
 
 /**
@@ -167,30 +105,27 @@ $app->post('/api/webhook', function () {
     return ['success' => true];
 });
 
+/**
+ * Обработчик не существует.
+ */
 $app->notFound(function () {
-    return ['success' => false, 'message' => 'not found'];
+    return ['success' => false, 'message' => 'Not Found'];
 });
 
-// Making the correct answer after executing
+/**
+ * Хук выполняется после звпроса и оборачивает ответ в JSON.
+ */
 $app->after(function () use ($app) {
-
-    // Getting the return value of method
     $return = $app->getReturnedValue();
 
     if (is_array($return)) {
-        // Transforming arrays to JSON
         $app->response->setContent(json_encode($return));
     } elseif (!strlen($return)) {
-        // Successful response without any content
         $app->response->setStatusCode('204', 'No Content');
-    } else {
-
-        var_dump($return);
-        // Unexpected response
-        //throw new Exception('Bad Response');
+    } else { // Unexpected response
+        throw new Exception('Bad Response');
     }
 
-    // Sending response to the client
     $app->response->send();
 });
 
