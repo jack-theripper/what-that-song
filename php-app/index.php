@@ -149,7 +149,7 @@ $app->post('/api/recognize', function () {
 /**
  * Веб-хук для обработки сообщений от телеграм бота.
  */
-$app->get('/api/webhook', function () {
+$app->post('/api/webhook', function () {
 
     $bot_api_key = getenv('TELEGRAM_BOT_API_KEY');
 
