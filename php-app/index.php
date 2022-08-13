@@ -189,7 +189,7 @@ $app->get('/api/webhook', function () {
                     $bus = [
                         new Processing($ffmpegPath, new \Phalcon\Http\Request\File([
                             'tmp_name' => $filePath
-                        ])),
+                        ]), false),
                         new Identify($requrl, $access_key, $access_secret),
                         fn(string $response) => json_decode($response, false)
                     ];

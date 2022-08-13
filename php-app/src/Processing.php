@@ -22,15 +22,22 @@ class Processing
     protected File $file;
 
     /**
+     * @var bool Проверять формат если пришли "сырые" данные?
+     */
+    protected bool $checkMp3;
+
+    /**
      * Перекодирвоание полученного отрывка
      *
      * @param string $ffmpegPath Путь до исполняемого файла `ffmpeg`
      * @param File $file Полученный файл
+     * @param bool $checkMp3
      */
-    public function __construct(string $ffmpegPath, File $file)
+    public function __construct(string $ffmpegPath, File $file, bool $checkMp3 = true)
     {
         $this->ffmpegPath = $ffmpegPath;
         $this->file = $file;
+        $this->checkMp3 = $checkMp3;
     }
 
     /**
@@ -62,11 +69,11 @@ class Processing
     {
         $handle = fopen($this->getFile()->getTempName(), 'rb');
 
-        if (!$this->checkBytes(fread($handle, 3))) {
+        if ($this->checkMp3 && !$this->checkBytes(fread($handle, 3))) {
             throw new \RuntimeException('Wrong data');
         }
 
-        fseek($handle, 0); // т.е. я читал первые байты в checkBytes, то нужно сбросить указатель
+        fseek($handle, 0); // т.к. я читал первые байты в checkBytes, то нужно сбросить указатель
 
         $process = new Process([$this->getFfmpegPath(), '-y', '-stdin', '-f', 'mp3', '-i', '-', '-ss', 0, '-t', 15, '-f', 'mp3', '-ar', 44100, '-']);
         $process->setInput($handle);
