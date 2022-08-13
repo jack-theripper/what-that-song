@@ -67,16 +67,19 @@ class Processing
      */
     public function __invoke(): string
     {
-        $handle = fopen($this->getFile()->getTempName(), 'rb');
+        if ($this->checkMp3) {
+            $handle = fopen($this->getFile()->getTempName(), 'rb');
 
-        if ($this->checkMp3 && !$this->checkBytes(fread($handle, 3))) {
-            throw new \RuntimeException('Wrong data');
+            if (!$handle || !$this->checkBytes(fread($handle, 3))) {
+                fclose($handle);
+                throw new \RuntimeException('Wrong data');
+            }
+
+            fclose($handle);
         }
 
-        fseek($handle, 0); // т.к. я читал первые байты в checkBytes, то нужно сбросить указатель
-
-        $process = new Process([$this->getFfmpegPath(), '-y', '-stdin', '-f', 'mp3', '-i', '-', '-ss', 0, '-t', 15, '-f', 'mp3', '-ar', 44100, '-']);
-        $process->setInput($handle);
+        $process = new Process([$this->getFfmpegPath(), '-y', '-i', $this->getFile()->getTempName(), '-ss', 0, '-t', 15, '-f', 'mp3', '-ar', 44100, '-']);
+        $process->setTimeout(30);
 
         try {
             $process->mustRun();

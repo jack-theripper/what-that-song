@@ -158,12 +158,11 @@ $app->get('/api/webhook', function () {
         $bot->useGetUpdatesWithoutDatabase();
         $bot->setDownloadPath(__DIR__ . '/bot_downloads/');
         $bot->addCommandClass(TelegramGenericCommand::class);
+        $bot->enableLimiter();
 
         $bot->handle();
-    } catch (TelegramException $exception) {
-
     } catch (Exception $exception) {
-
+        throw $exception;
     }
 
     return ['success' => true];
