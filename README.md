@@ -1,46 +1,64 @@
-# Getting Started with Create React App
+# What-That-Song (Что это за песня) - узнать название песни по отрывку
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Пэт проект. Веб-приложение (клиент\сервер), с помощью которого
+можно по «отрывку» песни узнать исполнителя. Пользователь
+паратаскивает аудио или видео файл, выбирает отрезок и запускает "процесс", нажав на кнопку "Узнать песню".
 
-## Available Scripts
+Перекодированный и сжатый в браузере файл, отправляется на бэкенд (PHP+Phacon+FFMpeg) для дальнейшей обработки. Используется база отпечатков ACR-cloud. Ради интереса реализован telegram-бот.
 
-In the project directory, you can run:
+- Веб-приложение: [https://what-that-song.herokuapp.com](https://what-that-song.herokuapp.com)
+- Телеграм-бот: [https://t.me/whathatsongbot](https://t.me/whathatsongbot)
 
-### `yarn start`
+## Установка и deploy
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Для изучения платформы Heroku, проект сделан для развертывания только на этой платформе, причем только на одном Dyno's.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Вам понадобятся Buildpacks:
 
-### `yarn test`
+- heroku/nodejs
+- heroku/php
+- https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Кроме сборки React-приложения (build), устанавливается веб-сервер для PHP, стороннее расширение Phalcon и
+набор консольных утилит FFMpeg.
 
-### `yarn build`
+### Требования
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Node.js
+- PHP 7.4
+- FFMpeg
+- Phalcon (php-ext)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Установка для разработки
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- yarn
+- composer install
 
-### `yarn eject`
+В файле `reactjs-app/constants.ts` изменить адрес до API.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Переменные окружения
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Данные для доступа к базе Acrcloud
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- ACRCLOUD_HOST
+- ACRCLOUD_ACCESS_KEY
+- ACRCLOUD_ACCESS_SECRET
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+Для работы телеграм бота
 
-## Learn More
+- TELEGRAM_BOT_API_KEY
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Запустить приложение для разработки
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+
+- yarn start
+- php7.4 -S localhost:80 -t php-app/
+
+Для локальной обработки веб-хуков телеграм можно воспользоваться [ngrok](https://ngrok.com/). Адрес домен.ngrok.io/api/webhook.
+
+- ngrok http 80
+
+(не забыть изменить API_BASE на `http://localhost:80`)
+
+Открыть [http://localhost:3000](http://localhost:3000), чтобы просмотреть его в браузере.
+Страница перезагрузится, если вы внесете изменения. Вы также увидите любые ошибки в консоли.
